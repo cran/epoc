@@ -1,0 +1,451 @@
+# Tobias Abenius 2011
+#
+# S4 classes not used because of ignorance
+#setClass("EPOCA",contains="list")
+#setClass("EPOCG",contains="list")
+progressbar <- function(i,k,p,q,progress) {
+  progress.old <- round(progress,digits=0)
+  progress <- round(50 * (p * (k-1) + i) / (p*q),digits=0)
+  if (progress > progress.old) {
+    cat(paste('\r|',paste(rep('=', progress),collapse=''), '>',paste(rep(' ', 50-progress),collapse=''),'|',sep=''))
+  }
+  return(progress)
+}
+reg <- function(y,x) {
+#  mode <- 3
+#  if (mode==1) {
+#    require('corpcor')
+#    pinvu <- pseudoinverse(as.matrix(t(x)))
+#    d <- as.matrix(t(y)) %*% pinvu
+#  } else if (mode==2) {
+#    d <- coef(lm(y~x))[1]
+#  } else if (mode==3) {
+    d <- coef(lsfit(x,y,intercept=T))[2]
+#  }
+  d
+}
+coef.EPOCA <- function(object, k=1, ...) {
+  object$coefficients[[k]]
+}
+predict.EPOCG <- function(object,newdata,k=1,trace=0, ...) {
+  if (typeof(newdata) == "list") # works for data.frame also
+    U <- newdata$U
+  else
+    U <- newdata
+  if (is.null(U)) stop("predict require U")
+  m <- dim(U)[1]
+  p <- dim(U)[2]
+  if (trace > 0) cat("Predicting for p =",p,"variables, in",m,"points\n")
+  (U - object$U.mean) %*% coef(object,k=k, ...)
+}
+predict.EPOCA <- function(object,newdata,k=1,trace=0, ...) {
+  if (typeof(newdata) == "list") { # works for data.frame also
+    Y <- newdata$Y
+    if (is.null(Y))
+      stop("Y is required")
+    N <- dim(Y)[1]
+    p <- dim(Y)[2]
+    U <- newdata$U
+    if (is.null(U))
+      U <- array(object$U.mean,dim=c(N,p))
+    else
+      U <- U - object$U.mean
+  } else {
+    Y <- newdata
+    N <- dim(Y)[1]
+    p <- dim(Y)[2]
+    U <- array(object$U.mean,dim=c(N,p))
+  }
+  Y <- Y - object$Y.mean
+  if (is.null(Y)) stop("predict require Y")
+  if (trace > 0)
+    cat("\nUsing direct effects from object\n")
+  YonU <- U%*%diag(object$d) 
+ 
+  if (trace > 0) cat("Predicting for p =",p,"variables, in",N,"points\n")
+  Y %*% coef(object,k=k, ...) + YonU
+}
+summary.EPOCA <- function(object, ...) {
+  K <- length(object$lambda)
+  sp <- array(0,dim=c(K,4))
+  dimnames(sp) <- list(paste("λ=",round(object$lambda,digits=4),sep=''),c("R²","adj.R²","RSS","non-zeros"))
+  sp[,1] <- round(object$R2,digits=4)
+  sp[,2] <- round(object$R2.adj,digits=4)
+  sp[,3] <- round(object$RSS,digits=4)
+  p <- dim(object$coefficients[[1]])[1]
+  links <- function (B) as.integer(sum(B * (1 - diag(array(1,dim=p))) != 0))
+  q <- length(object$coefficients)
+  for(k in 1:q) sp[k,4] <- links(object$coefficients[[k]])
+  ans <- list(call=object$call,objects=sp,SS.tot=object$SS.tot,d=object$d)
+  class(ans) <- "summary.EPOCA"
+  return(ans)
+}
+print.summary.EPOCA <- function(x, ...) {
+  digits = max(3, getOption("digits") - 3)
+  cat("\nCall:\n",deparse(x$call), "\n", sep="")
+  cat("\nDirect effects: \n")
+  print.default(x$d, ...)
+  cat("\nModels:\n")
+  print.default(x$models, print.gap=2, quote=F)
+  cat("\nSStot:",x$SS.tot,"\n")
+  cat("\n")
+}
+print.EPOCA <- function(x, ...) {
+  digits = max(3, getOption("digits") - 3)
+  cat("\nCall:\n",deparse(x$call), "\n\n", sep="")
+  cat("Coefficients:\n")
+  print.default(format(coef(x), digits=digits), print.gap=2, quote=FALSE, ...)
+  cat("\nDirect effects: \n")
+  print.default(x$d, ...)
+  s <- summary(x)
+  cat("\nModels: \n")
+  print.default(s$xs, print.gap=2, ...)
+  invisible(x)
+}
+print.EPOCG <- function(x, ...) {
+  digits = max(3, getOption("digits") - 3)
+  cat("\nCall:\n",deparse(x$call), "\n", sep="")
+  cat("\nCoefficients:\n")
+  print.default(format(coef(x), digits=digits), print.gap=2, quote=FALSE, ...)
+  s <- summary(x)
+  cat("\nDirect effects: \n")
+  print.default(x$d, ...)
+  cat("\nModels: \n")
+  print.default(s$xs, print.gap=2, ...)
+  invisible(x)
+}
+as.igraph.EPOCA <- function(model,k=1) {
+  p <- dim(model$coefficients)[1]
+  adjm <- coef(model, k=k) 
+  # columns are targets in igraph adjacency matrices
+  require('igraph')
+  g <- graph.adjacency(adjm,mode='directed',weighted=T,diag=F)
+  return(g)
+}
+as.graph.EPOCA <- function(model, k=1) {
+  require('graph')
+  p <- dim(coef(model,k=k))[1]
+  A <- abs(coef(model,k=k)) * (1 - diag(array(1,dim=p)))
+  return( new("graphAM", adjMat=A, edgemode='directed') )
+}
+write.sif <- function(model, k=1, file="", append=F) {
+  if (file == "") 
+    file <- stdout()
+  else if (is.character(file)) {
+    file <- file(file, ifelse(append, "a", "w"))
+    on.exit(close(file))
+  }
+  else if (!isOpen(file, "w")) {
+    open(file, "w")
+    on.exit(close(file))
+  }
+  if (!inherits(file, "connection")) 
+    stop("'file' must be a character string or connection")
+  A <- coef(model,k=k)
+  p <- dim(A)[1]
+  for (i in 1:p)
+    for(j in 1:p) {
+      e <- zapsmall(A[i,j],digits=3)
+      if (e != 0)
+	if (e < 0) {
+	  cat(rownames(A)[i],'inhibits',colnames(A)[j],"\n",file=file)
+	} else {
+	  cat(rownames(A)[i],'stimulates',colnames(A)[j],"\n",file=file)
+	}
+    }
+}
+plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, ...) {
+  p <- dim(x$coefficients)[1]
+  adjm <- coef(x, k=k) * (1 - diag(array(1,dim=p)))
+  # columns are targets in igraph adjacency matrices
+  require('igraph')
+  g <- graph.adjacency(adjm,mode='directed',weighted=T,diag=F)
+  vx <- rownames(adjm)
+  if (is.null(layout)) {
+    if (!threed)
+      g$layout <- layout.circle
+    else
+      g$layout <- layout.sphere
+  } else {
+    g$layout <- layout
+  }
+  if(threed) {
+    rglplot(g,vertex.label=vx,vertex.size=2, ...)
+  } else {
+    plot(g,vertex.label=vx,vertex.label.cex=0.8,vertex.size=35,vertex.color=0,vertex.shape="rectangle",edge.width=1,edge.color='black', ...)
+    title(x$call)
+  }
+}
+plot.EPOCG <- plot.EPOCA
+coef.EPOCG <- coef.EPOCA
+print.summary.EPOCG <- print.summary.EPOCA
+summary.EPOCG <- summary.EPOCA
+as.graph.EPOCG <- as.graph.EPOCA
+as.igraph.EPOCG <- as.igraph.EPOCA
+as.graph.EPOCG <- as.graph.EPOCA
+
+epoc.lambdamax <- function(X,Y,getall=F) {
+  n <- dim(Y)[2] #number of variables = genes
+  if (is.na(n) | n == 1) {
+    return( norm(t(X) %*% Y,'i') )
+  } else {
+    lambdamax <- array(NaN,dim=n)
+    for (k in 1:n)
+      lambdamax[k] <- norm(t(X) %*% Y[,k],'i')
+    if (getall) return (lambdamax)
+    else return(max(lambdamax))
+  }
+}
+epoc.bootstrap <- function(Y,U,nboots=100,bthr=NULL,method='epocG',...) {
+  first = T
+  N <- dim(Y)[1]
+  for (i in 1:nboots) {
+    ix <- sample(1:N, N, replace=T)
+    if (method == 'epocG')
+      mod.boot1 <- epocG(Y[ix,],U[ix,],...)
+    else
+      mod.boot1 <- epocA(Y[ix,],U[ix,],...)
+    D2 <- (zapsmall(mod.boot1$coefficients) != 0)*1
+    if (first) {
+      D <- D2
+      first = F
+    } else {
+      D <- D + D2 
+    }
+  }
+  D <- D/nboots
+  if (!is.null(bthr))
+    D <- (D >= bthr)
+  D
+}
+# translation of EPoC A net_ccd.m
+epocA <- function(Y,U=NULL,lambdas=NULL,thr=1e-10,trace=0) {
+  require('lassoshooting')
+  hasU <- !(length(U) == 1 && is.null(U))
+  cl <- match.call()
+#  require('Matrix')
+  m <- dim(Y)[1] #number of equations = experiments
+  n <- dim(Y)[2] #number of variables = genes
+  if (trace > 0) cat("Solving for p =",n,"variables,",m,"equations\n")
+  if (trace > 0) cat("Centering...")
+  #center Y and U
+  muY <- colMeans(Y)
+  Y <- Y - muY
+  if (hasU) {
+    muU <- colMeans(U)
+    U <- U - muU
+  } else {
+    U <- array(0,dim=c(m,n))
+    muU <- array(0,dim=c(n))
+  }
+  if (trace > 0) cat("DONE\n")
+  #/center
+  #regressing Y on U
+  if (trace > 0) cat("Regressing Y on U...")
+  if (hasU) {
+    d <- sapply(1:n,function(i) reg(Y[,i], U[,i]))
+    d <- pmax(d,0)
+  } else {
+    d <- array(0,dim=n)
+  }
+  names(d) <- dimnames(Y)[[2]]
+  if (trace > 0) cat("Correcting for direct effects...")
+  YonU <- array(0,dim=c(m,n))
+  for (i in 1:n) {
+    YonU[,i] <- Y[,i] * d[i]*U[,i]
+  }
+#  YonU <- U%*%diag(d) 
+  Yres <- Y - YonU
+  if (trace > 0) cat("DONE\nDirect effects of CNA:",d,"\n")
+
+  #/regression
+  if (is.null(lambdas)) {
+    iv <- 0:12
+    lambdaseries <- exp(-iv/6)
+    iv <- 5:9
+    lambdaseries <- c(lambdaseries,exp(-iv/2))
+    lambdaseries <- c(lambdaseries,0)
+  } else {
+    lambdaseries <- lambdas
+  }
+  q <- length(lambdaseries)
+  #finding maximum lambda
+  if (trace > 0) cat("Finding λ_max...")
+  inorms <- epoc.lambdamax(Y,Yres,getall=T)
+  if (trace > 0) cat("\n||.||∞: ",inorms,"\n")
+  lambdamax <- max(inorms)
+  extreme.gene <- colnames(Y)[which.max(inorms)]
+  if (trace > 0) {
+    cat("DONE\nRel.λs:",lambdaseries,"\n")
+    cat("extreme gene:",extreme.gene,", lambdamax =",lambdamax,"\n")
+  }
+  #/finding maximum lambda
+  ##############
+  if (trace == 1) cat("Lasso regression...")
+  lasso <- lassoshooting
+  B <- array(NaN,dim=c(n,n,q))
+  yhat <- array(NaN,dim=c(m,n,q))
+  e <- array(NaN,dim=c(m,n,q))
+  s2 <- array(NaN,dim=q)
+  RSS <- array(NaN,dim=q)
+  R2 <- array(NaN,dim=q)
+  R2.adj <- array(NaN,dim=q)
+  RMSD <- array(NaN,dim=q)
+  XtX <- t(Y) %*% Y
+  if (trace == 1) cat("Lasso regression...")
+  # Resp: Yres = Y - dU, Pred: Y
+  pred <- Y
+  progress <- 0
+  for(qk in 1:q) {
+    lambda <- lambdamax * lambdaseries[qk]
+    for (k in 1:n) {
+      if (trace == 2) progress <- progressbar(k,qk,n,q,progress)
+      respk <- Yres[,k]
+      XtY <- t(Y) %*% respk
+      if (lambdaseries[qk] == 0) { # FIXME: time if this really is faster
+	predk <- pred 
+	predk[,k] <- 0
+	model <- lm(respk ~ predk)
+	b <- coef(model)[-1] # skip intercept since centered
+	b[k] <- 0
+      } else {
+	model<-lasso(xtx=XtX,xty=XtY,lambda=lambda,forcezero=k,thr=thr)
+	b <- model$coefficients
+      }
+      B[,k,qk] <- b
+    }
+    B[,,qk] <- B[,,qk]
+    resp <- Y
+    yhat[,,qk] <- pred %*% B[,,qk] + YonU
+    if (qk == 1) 
+      SS.tot <- sum((resp - colMeans(resp))^2)
+    e[,,qk] <- resp - yhat[,,qk]
+    RSS[qk] <- sum(e[,,qk]^2)
+    R2[qk] <- 1 - RSS[qk] / SS.tot
+    R2.adj[qk] <- 1 - (1 - R2[qk])*( (m-1)/(m-n-1) )
+    s2[qk] <- sum(e[,,qk]^2) / (m - n)
+    RMSD[qk] <- sqrt(RSS[qk]/m)
+  }
+  if (trace > 0) cat("\rDONE",rep(' ',50),'\n',sep='')
+  obj <- list(call=cl,coefficients=B,Y.mean=muY,U.mean=muU,d=d,s2=s2,RMSD=RMSD,RSS=RSS,SS.tot=SS.tot,R2=R2,R2.adj=R2.adj,lambda=lambdaseries,lambdamax=lambdamax)
+  dimnames(obj$coefficients) <- list(dimnames(Y)[[2]],dimnames(Y)[[2]],paste('lambda =',lambdaseries))
+#  obj <- new("EPOCA",obj)
+  class(obj) <- "EPOCA"
+  return(obj)
+}
+epocG <- function(Y,U,lambdas=NULL,predictorix=NULL,thr=1e-10,trace=0) {
+  require('lassoshooting')
+  require('Matrix')
+  givenB = NULL # only used for debugging
+  N <- dim(Y)[1] #number of equations = experiments
+  p <- dim(Y)[2] #number of variables = genes
+  if (trace > 0) cat("Solving for p =",p,"variables,",N,"equations\n")
+  if (trace > 0) cat("Centering...")
+  muY <- colMeans(Y)
+  Y <- Y - muY
+  muU <- colMeans(U)
+  U <- U - muU
+  if (trace > 0) cat("DONE\n")
+  if (is.null(predictorix)) {
+    predictorix <- 1:p
+    P <- p
+  } else {
+    P <- length(predictorix)
+  }
+  reindex <- array(0,dim=p)
+  reindex[predictorix] <- 1:P
+
+  if (is.null(lambdas)) lambdas <- c(0.99999, 1.25^(-(1:10)),0)
+  if (trace > 0) cat("lambdas: ",lambdas,"\n")
+
+  if (trace > 0) cat("Regressing Y on U...")
+  d <- sapply(1:p,function(i) reg(Y[,i], U[,i]))
+  d <- pmax(d,0)
+  names(d) <- dimnames(Y)[[2]]
+  if (trace > 0) cat("DONE\n")
+  if (trace > 3) cat("Direct effects of CNA:",d,"\n")
+
+  q <- length(lambdas)
+  if (is.null(givenB)) {
+    #B <- array(0, dim=c(p,p,q))
+    B <- list()
+  } else {
+    B <- givenB
+  }
+  s2 <- array(NaN,dim=q)
+  RSS <- array(NaN,dim=q)
+  R2 <- array(NaN,dim=q)
+  R2.adj <- array(NaN,dim=q)
+  RMSD <- array(NaN,dim=q)
+
+  if (trace > 0) cat("Gram matrix calculation of predictors...")
+  pred <- U[,predictorix]
+  XtX <- t(pred) %*% pred
+  if (trace > 0) cat("DONE\n")
+  if (trace > 0) cat("Correcting for direct effects...")
+  YonU <- array(0,dim=c(N,p))
+  for (i in 1:p) YonU[,i] <- Y[,i] * d[i]*U[,i]
+#  YonU <- U%*%diag(d)  # requires too much memory
+  resp <- Y - YonU
+  if (trace > 0) cat("DONE\n")
+
+  #finding maximum lambda
+  if (trace > 0) cat("Finding λ_max...")
+  inorms <- epoc.lambdamax(pred,resp,getall=T)
+  #load('inorms.Rdata')
+
+  if (trace > 3) cat("\n||.||∞: ",inorms,"\n")
+  lambdamax <- max(inorms)
+  extreme.gene <- colnames(Y)[which.max(inorms)]
+  if (trace > 0) {
+    cat("DONE\nRel.λs:",lambdas,"\n")
+    cat("extreme gene:",extreme.gene,", lambdamax =",lambdamax,"\n")
+  }
+  #/finding maximum lambda
+  ########################
+  # resp: y - b U  pred: U
+  if (trace == 1) cat("Lasso regression...")
+  lasso <- lassoshooting
+  progress <- 0
+  for(k in 1:q) {
+    B1 <- sparseMatrix(i=1:p, j=1:p, x=d)
+    #B1 <- Matrix(0,nrow=p,ncol=p) # Make it sparse
+    #B1 <- array(0,dim=c(p,p))
+    if (is.null(givenB)) {
+      lambda <- lambdas[k] * lambdamax
+      for(i in 1:p) {
+	if (trace == 2) progress <- progressbar(i,k,p,q,progress)
+	if (inorms[i] >= lambda) {
+	  if (trace == 3) cat("for var i =",i,"lasso...\n")
+	  m <- lasso(xtx=XtX,x=pred,y=resp[,i],lambda=lambda,forcezero=i,thr=thr)
+	  if (trace == 3) cat("for var i =",i," lasso done\n")
+	  nonz <- (1:P)[m$coefficients != 0]
+	  betas <- Matrix(0,nrow=p,ncol=1,sparse=T) # sparse M don't go well with arrays..
+	  betas[predictorix[nonz],1] <- m$coefficients[nonz]
+	  B1[,i] <- B1[,i] + betas
+	}
+      }
+      #for(i in 1:p) B1[i,i] <- B1[i,i] + d[i] # extremely slow
+      #diag(B1) <- diag(B1) + d                # too memory hungry
+    }
+    if (trace==3) cat("for lambda_k, k =",k,"\n")
+    B[[k]] <- B1
+    if (k==1) 
+      SS.tot <- sum((Y - colMeans(Y))^2)
+    yhat <- U %*% B1
+    e <- Y - yhat
+    RSS[k] <- sum(e^2)
+    R2[k] <- 1 - RSS[k] / SS.tot
+    R2.adj[k] <- 1 - (1 - R2[k])*( (N-1)/(N-p-1) )
+    s2[k] <- RSS[k] / (N - p)
+    RMSD[k] <- sqrt(RSS[k]/N)
+  }
+  if (trace > 0) cat("\rDONE",rep(' ',50),'\n',sep='')
+  cl <- match.call()
+  obj <- list(call=cl,coefficients=B,lambda=lambdas,lambdamax=lambdamax,d=d,U.mean=muU,R2=R2,R2.adj=R2.adj,SS.tot=SS.tot,RSS=RSS,RMSD=RMSD,s2=s2)
+  dimnames(obj$coefficients) <- list(dimnames(Y)[[2]],dimnames(Y)[[2]],paste('lambda =',lambdas))
+  class(obj) <- "EPOCG"
+  obj
+}
+
+

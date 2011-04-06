@@ -1,3 +1,7 @@
+2011-04-07  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* epoc.R: Fixed serious bug related to regression Y on U
+
 2011-04-06  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * epoc.R: Unicode characters instead of utf8

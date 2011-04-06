@@ -20,4 +20,5 @@ export(as.graph.EPOCA)
 export(as.graph.EPOCG)
 export(as.igraph.EPOCA)
 export(as.igraph.EPOCG)
+export(plapply)
 

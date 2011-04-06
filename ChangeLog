@@ -1,0 +1,9 @@
+2011-04-06  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* epoc.R: Unicode characters instead of utf8
+
+* epoc.Rd: Manual typeset with links and equations.
+
+* epoc.R: list handling for epocG, may brake epocA print, summary etc.
+* plapply.Rd: manual for parallel list apply.
+

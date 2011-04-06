@@ -3,13 +3,27 @@
 # S4 classes not used because of ignorance
 #setClass("EPOCA",contains="list")
 #setClass("EPOCG",contains="list")
+c.lambda = "\u03BB" #small lambda
+c.square = "\u00B2" #superscript square
+c.infty = "\u221E"  #infinity
+progressbar.width = 50
 progressbar <- function(i,k,p,q,progress) {
   progress.old <- round(progress,digits=0)
-  progress <- round(50 * (p * (k-1) + i) / (p*q),digits=0)
-  if (progress > progress.old) {
-    cat(paste('\r|',paste(rep('=', progress),collapse=''), '>',paste(rep(' ', 50-progress),collapse=''),'|',sep=''))
+  progress <- round(progressbar.width * (p * (k-1) + i) / (p*q),digits=0)
+  if (progress.old == 0 | progress > progress.old) {
+    cat(paste('\r|',paste(rep('=', progress),collapse=''), '>',paste(rep(' ', progressbar.width-progress),collapse=''),'|',sep=''))
   }
   return(progress)
+}
+plapply <- function(X1,X2,FUN, ...) {
+  FUN <- match.fun(FUN)
+  if (length(X1) != length(X2)) stop("x1 and x2 are not of same length")
+  if (!is.vector(X1) || is.object(X1)) X1 <- as.list(X1)
+  if (!is.vector(X2) || is.object(X2)) X2 <- as.list(X2)
+  l.new <- list()
+  for (k in 1:length(X1))
+    l.new[[k]] <- FUN(X1[[k]], X2[[k]], ...)
+  return(l.new)
 }
 reg <- function(y,x) {
 #  mode <- 3
@@ -68,11 +82,11 @@ predict.EPOCA <- function(object,newdata,k=1,trace=0, ...) {
 summary.EPOCA <- function(object, ...) {
   K <- length(object$lambda)
   sp <- array(0,dim=c(K,4))
-  dimnames(sp) <- list(paste("λ=",round(object$lambda,digits=4),sep=''),c("R²","adj.R²","RSS","non-zeros"))
+  dimnames(sp) <- list(paste(c.lambda,"=",round(object$lambda,digits=4),sep=''),c(paste("R",c.square,sep=''),paste("adj.R",c.square,sep=''),"RSS","non-zeros"))
   sp[,1] <- round(object$R2,digits=4)
   sp[,2] <- round(object$R2.adj,digits=4)
   sp[,3] <- round(object$RSS,digits=4)
-  p <- dim(object$coefficients[[1]])[1]
+  p <- dim(coef(object))[1]
   links <- function (B) as.integer(sum(B * (1 - diag(array(1,dim=p))) != 0))
   q <- length(object$coefficients)
   for(k in 1:q) sp[k,4] <- links(object$coefficients[[k]])
@@ -155,7 +169,7 @@ write.sif <- function(model, k=1, file="", append=F) {
     }
 }
 plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, ...) {
-  p <- dim(x$coefficients)[1]
+  p <- dim(x$coefficients[[1]])[1]
   adjm <- coef(x, k=k) * (1 - diag(array(1,dim=p)))
   # columns are targets in igraph adjacency matrices
   require('igraph')
@@ -205,17 +219,17 @@ epoc.bootstrap <- function(Y,U,nboots=100,bthr=NULL,method='epocG',...) {
       mod.boot1 <- epocG(Y[ix,],U[ix,],...)
     else
       mod.boot1 <- epocA(Y[ix,],U[ix,],...)
-    D2 <- (zapsmall(mod.boot1$coefficients) != 0)*1
+    D2 <- lapply(mod.boot1$coefficients, function (A) (zapsmall(A) != 0)*1)
     if (first) {
       D <- D2
       first = F
     } else {
-      D <- D + D2 
+      D <- plapply(D, D2, function(A,B) A+B)
     }
   }
-  D <- D/nboots
+  D <- lapply(D,function (A) A/nboots)
   if (!is.null(bthr))
-    D <- (D >= bthr)
+    D <- lapply(D,function(A) A >= bthr)
   D
 }
 # translation of EPoC A net_ccd.m
@@ -270,13 +284,13 @@ epocA <- function(Y,U=NULL,lambdas=NULL,thr=1e-10,trace=0) {
   }
   q <- length(lambdaseries)
   #finding maximum lambda
-  if (trace > 0) cat("Finding λ_max...")
+  if (trace > 0) cat("Finding ",c.lambda,"_max...",sep='')
   inorms <- epoc.lambdamax(Y,Yres,getall=T)
-  if (trace > 0) cat("\n||.||∞: ",inorms,"\n")
+  if (trace > 3) cat("\n||.||",c.infty,": ",inorms,"\n",sep='')
   lambdamax <- max(inorms)
   extreme.gene <- colnames(Y)[which.max(inorms)]
   if (trace > 0) {
-    cat("DONE\nRel.λs:",lambdaseries,"\n")
+    cat("DONE\nRel.",c.lambda,"s:",lambdaseries,"\n",sep='')
     cat("extreme gene:",extreme.gene,", lambdamax =",lambdamax,"\n")
   }
   #/finding maximum lambda
@@ -326,7 +340,7 @@ epocA <- function(Y,U=NULL,lambdas=NULL,thr=1e-10,trace=0) {
     s2[qk] <- sum(e[,,qk]^2) / (m - n)
     RMSD[qk] <- sqrt(RSS[qk]/m)
   }
-  if (trace > 0) cat("\rDONE",rep(' ',50),'\n',sep='')
+  if (trace > 0) cat("\rDONE",rep(' ',progressbar.width),'\n',sep='')
   obj <- list(call=cl,coefficients=B,Y.mean=muY,U.mean=muU,d=d,s2=s2,RMSD=RMSD,RSS=RSS,SS.tot=SS.tot,R2=R2,R2.adj=R2.adj,lambda=lambdaseries,lambdamax=lambdamax)
   dimnames(obj$coefficients) <- list(dimnames(Y)[[2]],dimnames(Y)[[2]],paste('lambda =',lambdaseries))
 #  obj <- new("EPOCA",obj)
@@ -390,15 +404,15 @@ epocG <- function(Y,U,lambdas=NULL,predictorix=NULL,thr=1e-10,trace=0) {
   if (trace > 0) cat("DONE\n")
 
   #finding maximum lambda
-  if (trace > 0) cat("Finding λ_max...")
+  if (trace > 0) cat("Finding ",c.lambda,"_max...",sep='')
   inorms <- epoc.lambdamax(pred,resp,getall=T)
   #load('inorms.Rdata')
 
-  if (trace > 3) cat("\n||.||∞: ",inorms,"\n")
+  if (trace > 3) cat("\n||.||",c.infty,": ",inorms,"\n",sep='')
   lambdamax <- max(inorms)
   extreme.gene <- colnames(Y)[which.max(inorms)]
   if (trace > 0) {
-    cat("DONE\nRel.λs:",lambdas,"\n")
+    cat("DONE\nRel.",c.lambda,"s:",lambdas,"\n",sep='')
     cat("extreme gene:",extreme.gene,", lambdamax =",lambdamax,"\n")
   }
   #/finding maximum lambda
@@ -440,7 +454,7 @@ epocG <- function(Y,U,lambdas=NULL,predictorix=NULL,thr=1e-10,trace=0) {
     s2[k] <- RSS[k] / (N - p)
     RMSD[k] <- sqrt(RSS[k]/N)
   }
-  if (trace > 0) cat("\rDONE",rep(' ',50),'\n',sep='')
+  if (trace > 0) cat("\rDONE",rep(' ',progressbar.width),'\n',sep='')
   cl <- match.call()
   obj <- list(call=cl,coefficients=B,lambda=lambdas,lambdamax=lambdamax,d=d,U.mean=muU,R2=R2,R2.adj=R2.adj,SS.tot=SS.tot,RSS=RSS,RMSD=RMSD,s2=s2)
   dimnames(obj$coefficients) <- list(dimnames(Y)[[2]],dimnames(Y)[[2]],paste('lambda =',lambdas))

@@ -48,7 +48,7 @@ write.sif(model, k=1, file="", append=F)
 \arguments{
 \item{Y}{N x p matrix of mRNA transcript levels for p genes and N samples for epocA and epocG. For \code{epoc.lambdamax} \code{Y} is a multi-response matrix}
 \item{U}{N x p matrix of DNA copy number}
-\item{lambdas}{Non-negative vector of relative regularization parameters for lasso. lambda=0 means no regularization. Default=NULL means let epoc create a vector}
+\item{lambdas}{Non-negative vector of relative regularization parameters for lasso. \eqn{\lambda=0} means no regularization which give dense solutions (and takes longer to compute). Default=NULL means let EPoC create a vector}
 \item{predictorix}{Vector. Use a subset of the variables \code{1:p} as predictors, default is to use all}
 \item{thr}{Threshold for convergence. Default value is 1e-10.  Iterations stop when max absolute parameter change is less than thr}
 \item{trace}{Level of detail for printing out information as iterations proceed.
@@ -59,31 +59,31 @@ Default 0 -- no information}
 \item{X}{For\code{epoc.lambdamax} \code{Y} is the design matrix}
 \item{getall}{Logical. For \code{epoc.lambdamax} get a vector of all inf-norms instead of a single maximum}
 \item{layout}{Default NULL means layout.circle for 2D and layout.sphere for 3D plot}
-\item{threed}{Default FALSE means 2D plot, 3D plot requires package \code{rgl}}
+\item{threed}{Default FALSE means 2D plot, 3D plot requires package \code{\link[rgl]{rgl-package}}}
 \item{file}{either a character string naming a file or a connection open for writing. \code{""} indicates output to the console}
 \item{append}{logical. Only relevant if \code{file} is a character string.  If \code{TRUE}, the output is appended to the file.  If \code{FALSE}, any existing file of the name is destroyed}
 \item{model}{Model set from epocA or epocG}
 \item{k}{Select a model of sparsity level k in [1,K]}
 \item{newdata}{List of Y and U matrices required for prediction. \code{epocG} requires just U.}
-\item{...}{Parameters passed down to underlying function, e.g. print.default, plot or rglplot, or for epoc.bootstrap, epocG or epocA}
 \item{x}{Model parameter to \code{print} and \code{plot}}
 \item{object}{Model parameter to \code{summary}, \code{coef} and \code{predict}}
+\item{...}{Parameters passed down to underlying function, e.g. \code{\link{print.default}}, \code{\link[igraph]{plot.igraph}} or \code{\link[igraph]{rglplot}}, or for \code{epoc.bootstrap}, \code{epocG} or \code{epocA}}
 }
 
 \details{
-\code{epocA} and \code{epocG} estimates sparse matrices A or G using fast lasso regression from mRNA transcript levels Y and CNA profiles U. Two models are provided, EPoC A where
+\code{epocA} and \code{epocG} estimates sparse matrices \eqn{A} or \eqn{G} using fast lasso regression from mRNA transcript levels \eqn{Y} and CNA profiles \eqn{U}. Two models are provided, EPoC A where
 
-      AY + U + R = 0
+\deqn{AY + U + R = 0}
 
 and EPoC G where
 
-      Y = GU + E.
+\deqn{Y = GU + E.}
 
-The matrices R and E are so far treated as noise. For details see the reference section and the manual page of `lassoshooting'.
+The matrices \eqn{R} and \eqn{E} are so far treated as noise. For details see the reference section and the manual page of \code{\link{lassoshooting}}.
 
 \code{epoc.bootstrap} run \code{epocA} or \code{epocG} using bootstrap, see values section.
 
-\code{epoc.lambdamax} returns the maximal lambda value in a series of lasso regression models such that all coefficients are zero.
+\code{epoc.lambdamax} returns the maximal \eqn{\lambda} value in a series of lasso regression models such that all coefficients are zero.
 
 \code{plot} plot graph of model using the \code{igraph} package
 arrows only tell direction, not inhibit or stimulate
@@ -91,11 +91,11 @@ arrows only tell direction, not inhibit or stimulate
 \value{
   \code{epocA} and \code{epocG} returns an object of \code{class} `"epocA"' and `"epocG"' respectively.
 
-  The methods \code{summary}, \code{print}, \code{coef}, \code{predict} can be used as with other models. \code{coef} and \code{predict} take an extra optional integer parameter \code{k} (default 1) which gives the model at the given density level.
+  The methods \code{\link{summary}}, \code{\link{print}}, \code{\link{coef}}, \code{\link{predict}} can be used as with other models. \code{coef} and \code{predict} take an extra optional integer parameter \code{k} (default 1) which gives the model at the given density level.
   
 An object of these classes is a list containing at least the following components:
 
-\item{coefficients}{list of A or G matrices for the different lambdas}
+\item{coefficients}{list of A or G matrices for the different \eqn{\lambda}s}
 %\item{fitted.values}{the fitted mean values}
 %\item{residuals}{the residuals, i.e. the response minus fitted values}
 \item{R2}{R², coefficient of determination}
@@ -105,8 +105,11 @@ An object of these classes is a list containing at least the following component
 
   diagonal: Direct effects of CNA to corresponding gene
 }
-\subsection{epoc.bootstrap}{returns a p x p x k array of values in [0,1] where 1 is presence of link in 100\% of bootstrap iterations for the k different lambda values for p different genes.
+\subsection{epoc.bootstrap}{returns a list of \eqn{p \times p}{p x p} arrays of values in \eqn{[0,1]} where 1 is presence of link in 100\% of bootstrap iterations for the \eqn{k} different \eqn{\lambda} values for \eqn{p} different genes.
 }
+}
+\seealso{
+  \code{\link{print}}, \code{\link[igraph]{rglplot}}, \code{\link[igraph]{plot.igraph}}, \code{\link{coef}}, \code{\link{predict}}, \code{\link[rgl]{rgl-package}}
 }
 \author{
   Tobias Abenius

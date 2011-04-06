@@ -1,3 +1,11 @@
+2011-04-08  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* epoc.R: Use X'y with corresponding zero column to get correct infnorm into
+lassoshooting
+
+* INDEX: verbosity
+* epoc.Rd : add note about transpose
+
 2011-04-07  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * epoc.R: Fixed serious bug related to regression Y on U

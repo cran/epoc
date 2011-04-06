@@ -216,13 +216,17 @@ as.igraph.EPOCG <- as.igraph.EPOCA
 as.graph.EPOCG <- as.graph.EPOCA
 
 epoc.lambdamax <- function(X,Y,getall=F) {
-  n <- dim(Y)[2] #number of variables = genes
-  if (is.na(n) | n == 1) {
+  dims <- dim(Y)
+  if (is.null(dims)) {
     return( norm(t(X) %*% Y,'i') )
   } else {
+    n <- dims[2] #number of variables = genes
     lambdamax <- array(NaN,dim=n)
-    for (k in 1:n)
-      lambdamax[k] <- norm(t(X) %*% Y[,k],'i')
+    for (k in 1:n) {
+      predk = X
+      predk[,k] <- 0
+      lambdamax[k] <- norm(t(predk) %*% Y[,k],'i')
+    }
     if (getall) return (lambdamax)
     else return(max(lambdamax))
   }
@@ -251,7 +255,6 @@ epoc.bootstrap <- function(Y,U,nboots=100,bthr=NULL,method='epocG',...) {
 }
 epocA <- function(Y,U=NULL,lambdas=NULL,thr=1e-10,trace=0) {
   require('lassoshooting')
-  cat("WARNING: The epoc package is still experimental and almost surely contain bugs!\n")
   cl <- match.call()
 #  require('Matrix')
   N <- dim(Y)[1] #number of equations = experiments
@@ -329,6 +332,7 @@ epocA <- function(Y,U=NULL,lambdas=NULL,thr=1e-10,trace=0) {
   if (trace == 1) cat("Lasso regression...")
   # Resp: Yres = Y - dU, Pred: Y
   pred <- Y
+  XtX <- t(pred) %*% pred
   progress <- 0
   for(k in 1:q) {
     B1 <- Matrix(0,nrow=p,ncol=p,sparse=T)
@@ -337,22 +341,35 @@ epocA <- function(Y,U=NULL,lambdas=NULL,thr=1e-10,trace=0) {
       if (trace == 2) progress <- progressbar(i,k,p,q,progress)
       respk <- Yres[,i]
       predk <- pred 
-      predk[,i] <- 0
-      XtX <- t(predk) %*% predk
-      XtY <- t(predk) %*% respk
-      if (F & lambdaseries[k] == 0) { # FIXME: time if this really is faster
-	model <- lm(respk ~ predk)
-	b <- coef(model)[-1] # skip intercept since centered
-	b[i] <- 0
-      } else {
-	l<-lasso(xtx=XtX,xty=XtY,lambda=lambda,forcezero=i,thr=thr)
-	b <- l$coefficients
-      }
-      nonz <- (1:p)[b != 0]
-      if (length(nonz)>0){
-	betas <- Matrix(0,nrow=p,ncol=1,sparse=T)
-	betas[nonz,1] <- b[nonz]
-	B1[,i] <- B1[,i] + betas
+      predk[,i] <- 0 # if we don't update this, lambdamax is wrong, perhaps lassoshooting forcezero should set this column to 0
+      XtY <- t(predk) %*% respk 
+      if (inorms[i] >= lambda) { # avoid overhead
+	#cat("lambda > inorm:",lambda > inorms[i],", inorm = ",inorms[i],"\n")
+	#cat("new inorm: ",epoc.lambdamax(pred,respk),"\n")
+	#cat("|Xty|:", abs(XtY),"\n")
+	#cat("max|Xty|:", max(abs(XtY)),"\n")
+	if (F & lambdaseries[k] == 0) { # FIXME: time if this really is faster
+	  model <- lm(respk ~ predk)
+	  b <- coef(model)[-1] # skip intercept since centered
+	  b[i] <- 0
+	} else {
+	  l <- lasso(xtx=XtX,xty=XtY,lambda=lambda,forcezero=i,thr=thr, trace=0)
+	  b <- l$coefficients
+	  #require(lars)
+	  #l.lars <- lars(predk, respk, intercept=F, normalize=F, trace=0)
+	  #p.lars <- predict(l.lars, s=100000000000, mode='lambda', type='coefficients')
+	  #cat("lars lambdamax: ",p.lars$s,"\n")
+	  #b.lars <- p.lars$coefficients
+	  #b.lars[b.lars!=0]
+	  #(1:p)[b.lars!=0]
+	  #print(sum((b.lars - b)^2))
+	}
+	nonz <- (1:p)[b != 0]
+	if (length(nonz)>0){
+	  betas <- Matrix(0,nrow=p,ncol=1,sparse=T)
+	  betas[nonz,1] <- b[nonz]
+	  B1[,i] <- B1[,i] + betas
+	}
       }
     }
     B[[k]] <- B1

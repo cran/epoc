@@ -88,6 +88,9 @@ The matrices \eqn{R} and \eqn{E} are so far treated as noise. For details see th
 \code{plot} plot graph of model using the \code{igraph} package
 arrows only tell direction, not inhibit or stimulate
 }
+\note{
+The \code{coef} function returns transposed versions of the matrices \eqn{A} and \eqn{G}.
+}
 \value{
   \code{epocA} and \code{epocG} returns an object of \code{class} `"epocA"' and `"epocG"' respectively.
 
@@ -95,7 +98,7 @@ arrows only tell direction, not inhibit or stimulate
   
 An object of these classes is a list containing at least the following components:
 
-\item{coefficients}{list of A or G matrices for the different \eqn{\lambda}s}
+\item{coefficients}{list of t(A) or t(G) matrices for the different \eqn{\lambda}s}
 %\item{fitted.values}{the fitted mean values}
 %\item{residuals}{the residuals, i.e. the response minus fitted values}
 \item{R2}{R², coefficient of determination}

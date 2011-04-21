@@ -1,9 +1,8 @@
+import(methods)
+import(Matrix)
+import(survival)
+import(igraph)
 import(lassoshooting)
-export(epocA)
-export(epocG)
-export(epoc.lambdamax)
-export(epoc.bootstrap)
-export(write.sif)
 S3method(coef, EPOCA)
 S3method(coef, EPOCG)
 S3method(predict, EPOCA)
@@ -16,9 +15,33 @@ S3method(print, EPOCA)
 S3method(print, EPOCG)
 S3method(plot, EPOCA)
 S3method(plot, EPOCG)
+S3method(plot, EPoC.validation.pred)
+S3method(plot, EPoC.validation.W)
+
+export(epocA)
+export(epocG)
+export(epoc.lambdamax)
+export(plot.modelsel)
+
+export(epoc.validation)
+
+export(epoc.bootstrap)
+export(plot.bootsize)
+export(epoc.bootplot)
+export(epoc.final)
+
+export(epoc.svd)
+export(epoc.survival)
+S3method(plot,EPoC.survival)
+S3method(summary,EPoC.survival)
+S3method(print,summary.EPoC.survival)
+
+export(write.sif)
+
 export(as.graph.EPOCA)
 export(as.graph.EPOCG)
 export(as.igraph.EPOCA)
 export(as.igraph.EPOCG)
+
 export(plapply)
 

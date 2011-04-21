@@ -10,7 +10,6 @@
 \alias{print.EPOCG}
 \alias{coef.EPOCA}
 \alias{coef.EPOCG}
-\alias{epoc.bootstrap}
 \alias{epoc.lambdamax}
 \alias{plot.EPOCA}
 \alias{plot.EPOCG}
@@ -25,9 +24,8 @@
   EPoC (Endogenous Perturbation analysis of Cancer)
 }
 \usage{
-epocA(Y, U=NULL, lambdas=NULL, thr=1.0e-10, trace=0)
-epocG(Y, U, lambdas=NULL, predictorix=NULL, thr=1.0e-10, trace=0)
-epoc.bootstrap(Y, U, nboots=100, bthr=NULL, method='epocG',...)
+epocA(Y, U=NULL, lambdas=NULL, predictorix=NULL, thr=1.0e-10, trace=0, ...)
+epocG(Y, U, lambdas=NULL, predictorix=NULL, thr=1.0e-10, trace=0, ...)
 epoc.lambdamax(X, Y, getall=F)
 as.igraph.EPOCA(model,k=1)
 as.igraph.EPOCG(model,k=1)
@@ -36,38 +34,38 @@ as.graph.EPOCG(model,k=1)
 write.sif(model, k=1, file="", append=F)
 \method{print}{EPOCA}(x,...)
 \method{print}{EPOCG}(x,...)
-\method{summary}{EPOCA}(object, ...)
-\method{summary}{EPOCG}(object, ...)
+\method{summary}{EPOCA}(object, k=NULL, ...)
+\method{summary}{EPOCG}(object, k=NULL,...)
 \method{coef}{EPOCA}(object, k=1, ...)
 \method{coef}{EPOCG}(object, k=1, ...)
 \method{predict}{EPOCA}(object, newdata,k=1,trace=0, ...)
 \method{predict}{EPOCG}(object, newdata,k=1,trace=0, ...)
-\method{plot}{EPOCA}(x, layout=NULL,k=1,threed=F,...)
-\method{plot}{EPOCG}(x, layout=NULL,k=1,threed=F,...)
+\method{plot}{EPOCA}(x, layout=NULL,k=1,threed=F, showtitle=F, bthr=0, showself=F, ...)
+\method{plot}{EPOCG}(x, layout=NULL,k=1,threed=F, showtitle=F, bthr=0, showself=F, ...)
 }
 \arguments{
-\item{Y}{N x p matrix of mRNA transcript levels for p genes and N samples for epocA and epocG. For \code{epoc.lambdamax} \code{Y} is a multi-response matrix}
-\item{U}{N x p matrix of DNA copy number}
-\item{lambdas}{Non-negative vector of relative regularization parameters for lasso. \eqn{\lambda=0} means no regularization which give dense solutions (and takes longer to compute). Default=NULL means let EPoC create a vector}
-\item{predictorix}{Vector. Use a subset of the variables \code{1:p} as predictors, default is to use all}
-\item{thr}{Threshold for convergence. Default value is 1e-10.  Iterations stop when max absolute parameter change is less than thr}
-\item{trace}{Level of detail for printing out information as iterations proceed.
+  \item{Y}{N x p matrix of mRNA transcript levels for p genes and N samples for epocA and epocG. For \code{epoc.lambdamax} \code{Y} is a multi-response matrix}
+  \item{U}{N x p matrix of DNA copy number}
+  \item{lambdas}{Non-negative vector of relative regularization parameters for lasso. \eqn{\lambda=0} means no regularization which give dense solutions (and takes longer to compute). Default=NULL means let EPoC create a vector}
+  \item{predictorix}{Vector. Use a subset of the variables \code{1:p} as predictors, default is to use all}
+  \item{thr}{Threshold for convergence. Default value is 1e-10.  Iterations stop when max absolute parameter change is less than thr}
+  \item{trace}{Level of detail for printing out information as iterations proceed.
 Default 0 -- no information}
-\item{nboots}{Number of bootstrap iterations to run}
-\item{method}{For \code{epoc.bootstrap} method is \code{"epocG"} or \code{"epocA"}}
-\item{bthr}{Require presence of links in 100*bthr\% of the bootstrap iterations}
-\item{X}{For\code{epoc.lambdamax} \code{Y} is the design matrix}
-\item{getall}{Logical. For \code{epoc.lambdamax} get a vector of all inf-norms instead of a single maximum}
-\item{layout}{Default NULL means layout.circle for 2D and layout.sphere for 3D plot}
-\item{threed}{Default FALSE means 2D plot, 3D plot requires package \code{\link[rgl]{rgl-package}}}
-\item{file}{either a character string naming a file or a connection open for writing. \code{""} indicates output to the console}
-\item{append}{logical. Only relevant if \code{file} is a character string.  If \code{TRUE}, the output is appended to the file.  If \code{FALSE}, any existing file of the name is destroyed}
-\item{model}{Model set from epocA or epocG}
-\item{k}{Select a model of sparsity level k in [1,K]}
-\item{newdata}{List of Y and U matrices required for prediction. \code{epocG} requires just U.}
-\item{x}{Model parameter to \code{print} and \code{plot}}
-\item{object}{Model parameter to \code{summary}, \code{coef} and \code{predict}}
-\item{...}{Parameters passed down to underlying function, e.g. \code{\link{print.default}}, \code{\link[igraph]{plot.igraph}} or \code{\link[igraph]{rglplot}}, or for \code{epoc.bootstrap}, \code{epocG} or \code{epocA}}
+  \item{X}{For\code{epoc.lambdamax} \code{X} is the design matrix, i.e. predictors}
+  \item{getall}{Logical. For \code{epoc.lambdamax} get a vector of all inf-norms instead of a single maximum}
+  \item{layout}{Default NULL means layout.circle for 2D and layout.sphere for 3D plot}
+  \item{threed}{Default FALSE means 2D plot, 3D plot requires package \code{\link[rgl]{rgl-package}}}
+  \item{showtitle}{Show the call made to \code{epocA}/\code{epocG} if available in the plot title}
+  \item{showself}{Show self-regulating loops in plot, N.B. doesn't work as it should!}
+  \item{bthr}{Require presence of links in 100*bthr\% of the bootstrap iterations. If this is not a bootstrapped model it will still require values to be larger than this threshold.}
+  \item{file}{either a character string naming a file or a connection open for writing. \code{""} indicates output to the console}
+  \item{append}{logical. Only relevant if \code{file} is a character string.  If \code{TRUE}, the output is appended to the file.  If \code{FALSE}, any existing file of the name is destroyed}
+  \item{model}{Model set from epocA or epocG}
+  \item{k}{Select a model of sparsity level k in [1,K]. In summary default (NULL) means all.}
+  \item{newdata}{List of Y and U matrices required for prediction. \code{epocG} requires just U.}
+  \item{x}{Model parameter to \code{print} and \code{plot}}
+  \item{object}{Model parameter to \code{summary}, \code{coef} and \code{predict}}
+  \item{...}{Parameters passed down to underlying function, e.g. \code{\link{print.default}}, \code{\link[igraph]{plot.igraph}} or \code{\link[igraph]{rglplot}} For \code{epocA} and \code{epocG} \code{\dots} are reserved for experimental options.}
 }
 
 \details{
@@ -81,7 +79,6 @@ and EPoC G where
 
 The matrices \eqn{R} and \eqn{E} are so far treated as noise. For details see the reference section and the manual page of \code{\link{lassoshooting}}.
 
-\code{epoc.bootstrap} run \code{epocA} or \code{epocG} using bootstrap, see values section.
 
 \code{epoc.lambdamax} returns the maximal \eqn{\lambda} value in a series of lasso regression models such that all coefficients are zero.
 
@@ -99,20 +96,26 @@ The \code{coef} function returns transposed versions of the matrices \eqn{A} and
 An object of these classes is a list containing at least the following components:
 
 \item{coefficients}{list of t(A) or t(G) matrices for the different \eqn{\lambda}s}
+\item{links}{the number of links for the different \eqn{\lambda}s}
+\item{lambdas}{the \eqn{\lambda}s used for this model}
 %\item{fitted.values}{the fitted mean values}
 %\item{residuals}{the residuals, i.e. the response minus fitted values}
 \item{R2}{R², coefficient of determination}
-\item{R2.adj}{adjusted R², coefficient of determination adjusted for number of explanatory terms}
-\item{s2}{OLS estimate of the error variance}
-\subsection{epocG}{objects of class \code{epocG} also contain
-
-  diagonal: Direct effects of CNA to corresponding gene
-}
-\subsection{epoc.bootstrap}{returns a list of \eqn{p \times p}{p x p} arrays of values in \eqn{[0,1]} where 1 is presence of link in 100\% of bootstrap iterations for the \eqn{k} different \eqn{\lambda} values for \eqn{p} different genes.
-}
+\item{Cp}{Mallows Cp}
+%\item{R2.adj}{adjusted R², coefficient of determination adjusted for number of explanatory terms}
+\item{s2}{Estimate of the error variance}
+\item{RSS}{Residual Sum of Squares (SSreg)}
+\item{SS.tot}{Total sum of squares of the response}
+\item{inorms}{the infinity norm of predictors transposed times response for the different responses}
+\item{d}{Direct effects of CNA to corresponding gene}
 }
 \seealso{
-  \code{\link{print}}, \code{\link[igraph]{rglplot}}, \code{\link[igraph]{plot.igraph}}, \code{\link{coef}}, \code{\link{predict}}, \code{\link[rgl]{rgl-package}}
+  \code{\link{print}}, \code{\link{plot.modelsel}},
+  \code{\link{epoc.validation}},
+  \code{\link{epoc.bootstrap}},
+  \code{\link{plot.EPoC.validation.pred}},
+  \code{\link{plot.EPoC.validation.W}},
+  \code{\link[igraph]{rglplot}}, \code{\link[igraph]{plot.igraph}}, \code{\link{coef}}, \code{\link{predict}}, \code{\link[rgl]{rgl-package}}
 }
 \author{
   Tobias Abenius

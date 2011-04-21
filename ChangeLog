@@ -1,3 +1,22 @@
+2011-04-19  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* NAMESPACE: Added survival functions
+
+2011-04-19  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* DESCRIPTION: lowered version requirement
+
+2011-04-18  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* epoc.R: updated sparse matrix operations
+
+* NAMESPACE: export plot.modelsel, plot.bootsize, plot.EPoC.validation.W, plot.EPoC.validation.pred
+* plot.EPoC.validation.Rd: manual
+* plot.modelsel.Rd: manual
+* epoc.validation.Rd: manual
+* epoc.bootstrap.Rd: manual
+* epoc.survival.Rd: manual (need more)
+
 2011-04-08  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * epoc.R: Use X'y with corresponding zero column to get correct infnorm into

@@ -1,10 +1,8 @@
 \name{plapply}
 \alias{plapply}
-\title{plapply}
+\title{Parallell list apply}
 \encoding{utf-8}
-\description{
- Parallell list apply
-}
+\description{Parallell list apply}
 \usage{
 plapply(X1, X2, FUN, \dots)
 }
@@ -27,9 +25,6 @@ plapply(X1, X2, FUN, \dots)
 }
 \seealso{
   \code{\link{lapply}}
-}
-\author{
-  Tobias Abenius
 }
 \examples{
 X1 <- array(1:4,dim=c(2,2))

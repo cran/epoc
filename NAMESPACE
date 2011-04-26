@@ -31,6 +31,7 @@ export(epoc.bootplot)
 export(epoc.final)
 
 export(epoc.svd)
+export(epoc.svdplot)
 export(epoc.survival)
 S3method(plot,EPoC.survival)
 S3method(summary,EPoC.survival)

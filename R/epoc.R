@@ -260,7 +260,8 @@ plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, showtitle=F,bthr=0,show
   }
 }
 epoc.bootplot <- plot.EPOCA
-epoc.svdplot <- function(x,C=1) {
+epoc.svdplot <- function(G.svd,C=1) {
+  x <- G.svd
   ii2 <- x$ii[x$spload.in[,C]!=0 | x$spload.out[,C]!=0]
   newg <- t(x$m)[ii2,ii2]
   plot.EPOCA(newg,showself=F)
@@ -324,10 +325,13 @@ epoc.final <- function(epocboot, bthr=0.2, k) {
     stop(paste("epoc.final: the requested k exceeds the number of graphs created by epoc.bootstrap. which are",length(epocboot)))
   return(epocboot[[k]] >= bthr)
 }
-epoc <- function(method='G',Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL,thr=1e-10,trace=0, ...) {
+epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL,thr=1e-10,trace=0, ...) {
   require('lassoshooting')
   require('Matrix')
   cl <- match.call()
+  if (!is.null(cl[['lambda']]))
+    stop("The parameter `lambda' should be called `lambdas'.")
+  method <- match.arg(method)
 
   N <- dim(Y)[1] #number of equations = experiments
   p <- dim(Y)[2] #number of variables = genes
@@ -335,7 +339,7 @@ epoc <- function(method='G',Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL,thr=1e
   mlist <- strsplit(method,'.',fixed=T)
   method = mlist[[1]][1]
   method2 = ifelse(length(mlist[[1]]) > 1, mlist[[1]][2], '')
-  if (method!='G' & method!='A') stop(paste("Unknown method ",method,"!",sep=''))
+  #if (method!='G' & method!='A') stop(paste("Unknown method ",method,"!",sep=''))
 
   if (is.null(lambdas)) {
     lambdas = switch(method,
@@ -543,9 +547,12 @@ crossvalix <- function(N,K) {
   folds[[K]] <- left
   folds
 }
-epoc.validation <- function(type='pred',repl=1,Y,U,lambdas=NULL,predictorix=NULL,method='G',thr=1e-10,trace=0,...) {
+epoc.validation <- function(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,predictorix=NULL,method='G',thr=1e-10,trace=0,...) {
   N <- dim(Y)[1]
   first <- T
+  type = match.arg(type)
+#  trace = as.integer(match.arg(trace))
+  progress <- 0
   if (type == 'pred') {
     if (trace > 0) cat ("epoc.validation: type =",type)
     K = 10
@@ -553,11 +560,12 @@ epoc.validation <- function(type='pred',repl=1,Y,U,lambdas=NULL,predictorix=NULL
     for(b in 1:repl) {
       folds <- crossvalix(N,K)
       for (k in 1:K) {
+	if (trace > 0) progress <- progressbar(k,b,K,repl,progress)
 	Y.tr <- Y[-folds[[k]],]
 	U.tr <- U[-folds[[k]],]
 	Y.te <- Y[folds[[k]],]
 	U.te <- U[folds[[k]],]
-	G.tr <- epoc(method, Y.tr, U.tr, lambdas=lambdas,predictorix=predictorix,thr=thr,trace=trace,...)
+	G.tr <- epoc(method, Y.tr, U.tr, lambdas=lambdas,predictorix=predictorix,thr=thr,...)
 	if (first) {
 	  q = length(G.tr$links)
 	  E <- array(0,dim=c(K,repl,q))
@@ -605,7 +613,9 @@ epoc.validation <- function(type='pred',repl=1,Y,U,lambdas=NULL,predictorix=NULL
       U.te <- U[folds[[1]],]
       G1 <- epoc(method, Y.tr, U.tr, lambdas=lambdas,predictorix=predictorix,thr=thr,trace=trace,...)
       G2 <- epoc(method, Y.te, U.te, lambdas=lambdas,predictorix=predictorix,thr=thr,trace=trace,...)
+      K <- length(G1$links)
       for (i in 1:length(G1$links)) {
+	if (trace > 0) progress <- progressbar(i,b,K,repl,progress)
 	G1.v <- as(coef(G1,k=i),'sparseVector')
 	G2.v <- as(coef(G2,k=i),'sparseVector')
 	nzs <- (G1.v != 0 | G2.v != 0) # according to zadjust == 2 in crossval_scores.m

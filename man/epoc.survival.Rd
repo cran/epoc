@@ -1,6 +1,7 @@
 \name{epoc.survival}
 \alias{epoc.survival}
 \alias{epoc.svd}
+\alias{epoc.svdplot}
 \alias{plot.EPoC.survival}
 \alias{summary.EPoC.survival}
 \alias{print.summary.EPoC.survival}
@@ -10,6 +11,7 @@
 \usage{
   epoc.svd(model, k=1, C=1, numload=NULL)
   epoc.survival(G.svd, Y, U, surv, C=1, type=NULL)
+	epoc.svdplot(G.svd, C=1)
   \method{plot}{EPoC.survival}(x,...)
   \method{summary}{EPoC.survival}(object,...)
   \method{print}{summary.EPoC.survival}(x,...)
@@ -17,7 +19,7 @@
 \arguments{
   \item{model}{An object from \code{epocG} or \code{epocA} or a \code{Matrix} from \code{epoc.bootstrap} and friends.}
   \item{k}{In case \code{model} come from \code{epocG} or \code{epocA} select a model of sparsity level k in [1,K]. The default \code{k=1} means first/most sparse.}
-  \item{C}{Default 1. For \code{epoc.svd} the number of components. For \code{epoc.survival}, which component to use.}
+  \item{C}{Default 1. For \code{epoc.svd} the number of components. For \code{epoc.survival} and \code{epoc.svdplot}, which component to use.}
   \item{numload}{Number of loadings in the sparse components, a vector for each component. Default 10 for all components.}
   \item{G.svd}{The list obtained from \code{epoc.svd}.}
   \item{Y}{mRNA, samples x genes.}

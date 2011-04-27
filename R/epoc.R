@@ -1,4 +1,4 @@
-# Tobias Abenius, Rebecka Jornsten, Sven Nelander (c) 2011
+# Copyright 2011-, Tobias Abenius, Rebecka Jornsten, Sven Nelander
 #
 # S4 classes not used because of ignorance
 #setClass("EPOCA",contains="list")
@@ -239,7 +239,7 @@ plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, showtitle=F,bthr=0,show
     adjm <- adjm[ii,]
     adjm <- adjm[,ii]
   }
-  print(sum(adjm != 0))
+  #print(sum(adjm != 0))
   # columns are targets in igraph adjacency matrices
   require('igraph')
   g <- graph.adjacency(adjm,mode='directed',weighted=T,diag=F)
@@ -426,6 +426,7 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
   Cp <- array(NaN,dim=q)
   RMSD <- array(NaN,dim=q)
   BIC <- array(NaN,dim=q)
+  E <- list()
 
   if (trace > 0) cat("Gram matrix calculation of predictors...")
   XtX <- t(pred) %*% pred
@@ -451,12 +452,14 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
 	b <- l$coefficients
 	if (trace == 3) cat("for var i =",i," lasso done\n")
 	nonz <- (1:P)[b != 0]
+	#nonz <- setdiff(nonz,i) # FIXME
 	betas <- Matrix(0,nrow=p,ncol=1,sparse=T) # sparse M don't go well with arrays..
 	dimnames(betas)[[1]] <- gs
 	if (length(nonz)>0){
 	  betas[predictorix[nonz],1] <- b[nonz]
 	  B1[,i] <- B1[,i] + betas
 	}
+	B1[i,i] <- d[i] # without this bug occurs
       }
     }
     if (trace==3) cat("for lambda_k, k =",k,"\n")
@@ -470,6 +473,7 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
       yhat <- Y %*% B1 + muYresM + YonU 
     }
     e <- Y - yhat
+    E[[k]] <- e
     if(trace >= 3) {
       coryy <- array(0,dim=p)
       for(i in 1:p) {
@@ -500,7 +504,7 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
   links <- function (B) as.integer(sum( (B * (1 - diag(rep(1,p)))) != 0))
   links <- unlist(lapply(B, links))
 
-  obj <- list(call=cl, coefficients=B, lambdas=lambdas, lambdamax=lambdamax, d=d, Y.mean=muY,U.mean=muU, Yres.mean=muYres, R2=R2, Cp=Cp, SS.tot=SS.tot, RSS=RSS, RMSD=RMSD, s2=s2, links=links, inorms=inorms, BIC=BIC)
+  obj <- list(call=cl, coefficients=B, lambdas=lambdas, lambdamax=lambdamax, d=d, Y.mean=muY,U.mean=muU, Yres.mean=muYres, R2=R2, Cp=Cp, SS.tot=SS.tot, RSS=RSS, RMSD=RMSD, s2=s2, links=links, inorms=inorms, BIC=BIC, E=E)
   class(obj) <- switch(method, G="EPOCG", A="EPOCA")
   obj
 }
@@ -599,6 +603,7 @@ epoc.validation <- function(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,p
     opt <- findoptimvalid.pred(o)
     o$sopt <- opt$sopt
     o$lopt <- opt$lopt
+    o$fit.loglinkslambda <- opt$mm2
     class(o) <- "EPoC.validation.pred"
     return(o)
   } else if (type == 'concordance') {
@@ -640,6 +645,7 @@ epoc.validation <- function(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,p
     opt <- findoptimvalid(o)
     o$sopt <- opt$sopt.hi
     o$lopt <- opt$lopt.lo
+    o$fit.loglinkslambda <- opt$mm2
 #    o$sopt.lo <- opt$sopt.lo
 #    o$sopt.hi <- opt$sopt.hi
 #    o$lopt.lo <- opt$lopt.lo
@@ -760,7 +766,7 @@ plot.bootsize <- function(x, lambda.boot=NULL, B, range=c(0,1), ...) {
   ymin <- min(unlist(hG))
 #  recover()
 #  plot(bvec,hG[[1]],)
-  plot(c(range[1],range[2]),c(ymin,ymax),type='n',xlab='bootstrap threshold',ylab='network size',ylim=c(ymin,ymax),xlim=range, ...)
+  plot(c(range[1],range[2]),c(ymin,ymax),log='y',type='n',xlab='bootstrap threshold',ylab='network size',ylim=c(ymin,ymax),xlim=range, ...)
   for(k in 1:K) {
     lines(bvec,hG[[k]],lty=k)
   }

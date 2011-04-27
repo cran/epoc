@@ -1,3 +1,10 @@
+2011-05-19  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* data/synth.rda: unknown values (-99) clipped to 0
+
+* R/epoc.R: add lambda-links loess fit to output
+* R/epoc.R: logarithmic plot.bootsize
+
 2011-04-19  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * NAMESPACE: Added survival functions

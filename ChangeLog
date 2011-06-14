@@ -1,3 +1,11 @@
+2011-06-14  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* R/epoc.R: plot.EPoC.validation.pred: constrain text within left limit
+
+2011-06-13  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* R/epoc.R: clip coefficients using thr
+
 2011-05-19  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * data/synth.rda: unknown values (-99) clipped to 0

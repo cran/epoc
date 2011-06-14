@@ -451,7 +451,7 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
 	l <- lasso(xtx=XtX,xty=XtY,lambda=lambda,forcezero=i,thr=thr)
 	b <- l$coefficients
 	if (trace == 3) cat("for var i =",i," lasso done\n")
-	nonz <- (1:P)[b != 0]
+	nonz <- (1:P)[abs(b) >= thr] # 2011-06-13
 	#nonz <- setdiff(nonz,i) # FIXME
 	betas <- Matrix(0,nrow=p,ncol=1,sparse=T) # sparse M don't go well with arrays..
 	dimnames(betas)[[1]] <- gs
@@ -727,10 +727,13 @@ plot.EPoC.validation.pred <- function(x, ...) {
   points(o$mm$x[o$o],o$mm$fit[o$o],pch=2, ...)
   abline(v=o$lopt,lty=4, ...)
 
+  xtext <- min(o$mm$x[o$o])
+  xtext <- max(xtext, o$lopt)
+
   axis(side=3,o$mm2$x,labels=round(exp(o$mm2$fit),0))
-  text(o$lopt,quantile(o$mm$fit,.5),paste('lam*=',round(o$lopt,4)))
-  text(o$lopt,quantile(o$mm$fit,.6),paste('s*=',round(o$sopt,0)))
-  text(0.5, max(o$pp$fit+0.5*o$pp$se), paste("s: network size"))
+  text(xtext,quantile(o$mm$fit,.5),paste('lam*=',round(o$lopt,4)),pos=4)
+  text(xtext,quantile(o$mm$fit,.6),paste('s*=',round(o$sopt,0)),pos=4)
+  text(0.5, max(o$pp$fit+0.5*o$pp$se), paste("s: network size"),pos=1)
 }
 plot.modelsel <- function(x, ...) {
   eps <- 0.1
@@ -751,7 +754,7 @@ plot.modelsel <- function(x, ...) {
   abline(v=loptb,lty=3, ...)
   #text(x$loptb,quantile(x$mm$Cp,.5),paste('lam*=',round(x$lopt,4)))
   #text(x$loptc,,quantile(x$mm$Cp,.6),paste('s*=',round(x$sopt,0)))
-  text(quantile(x$lambdas,.5), max(newBIC), paste("s: network size"), ...)
+  text(.5, max(newBIC), paste("s: network size"), pos=1, ...)
   legend(quantile(x$lambdas,.8),quantile(newBIC,.75),c('Cp','BIC'),lty=1:2, ...)
 }
 nodiag <- function(x) (x * (1 - diag(rep(1,dim(x)[1]))))
@@ -860,9 +863,14 @@ epoc.survival <- function(G.svd, Y, U, surv, C=1, type=NULL) {
   return (o)
 }
 plot.EPoC.survival <- function (x,...) {
-  par(mfrow=c(1,2))
-  plot(x$survfit.in,xlab='Time',ylab='Survival', main = paste('input scoring comp C=',x$C,sep=''),col=1:2, lty=1:2, ...)
-  plot(x$survfit.out,xlab='Time',ylab='Survival', main = paste('output scoring comp C=',x$C,sep=''), col=1:2, lty=1:2, ...)
+  cl <- match.call()
+  if (!is.null(cl[['gray']]))
+    colors <- 1:1
+  else
+    colors <- 1:2
+  par(mfrow=c(1,2), ...)
+  plot(x$survfit.in,xlab='Time',ylab='Survival', main = paste('input scoring comp C=',x$C,sep=''),col=colors, lty=1:2)
+  plot(x$survfit.out,xlab='Time',ylab='Survival', main = paste('output scoring comp C=',x$C,sep=''), col=colors, lty=1:2)
 }
 summary.EPoC.survival <- function(object,...) {
   o <- list(inp=object$survtest.in,outp=object$survtest.out)

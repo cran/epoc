@@ -1,6 +1,6 @@
 Package: epoc
-Version: 0.2.4-7
-Date: 2011-04-27
+Version: 0.2.4-9
+Date: 2011-06-14
 Encoding: UTF-8
 Title: EPoC (Endogenous Perturbation analysis of Cancer)
 Author: Rebecka Jornsten, Tobias Abenius, Sven Nelander
@@ -15,6 +15,6 @@ Description: Estimates sparse matrices A or G using fast lasso
         noise. For details see the reference and the manual page of
         `lassoshooting'.
 License: LGPL-3
-Packaged: 2011-05-19 09:22:32 UTC; btobias
+Packaged: 2011-06-16 13:46:16 UTC; btobias
 Repository: CRAN
-Date/Publication: 2011-05-19 10:04:57
+Date/Publication: 2011-06-17 06:44:57

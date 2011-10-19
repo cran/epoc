@@ -98,12 +98,13 @@ summary.EPOCA <- function(object, k=NULL,...) {
   sp[,3] <- round(object$BIC[ks],digits=4)
   sp[,4] <- round(object$RSS[ks],digits=4)
   p <- dim(coef(object))[1]
-  links <- function (B) as.integer(sum( (B * (1 - diag(rep(1,p)))) != 0))
+  links <- object$links
+  #links <- function (B) as.integer(sum( (B * (1 - diag(rep(1,p)))) != 0))
   #links <- function (B) as.integer(sum(B != 0))
   q <- length(object$coefficients)
   i = 1
   for(k in ks)  {
-    sp[i,5] <- links(object$coefficients[[k]])
+    sp[i,5] <- links[k] #links(object$coefficients[[k]])
     i = i + 1
   }
   ans <- list(call=object$call,models=sp,SS.tot=object$SS.tot,d=object$d)
@@ -275,17 +276,25 @@ as.graph.EPOCG <- as.graph.EPOCA
 as.igraph.EPOCG <- as.igraph.EPOCA
 as.graph.EPOCG <- as.graph.EPOCA
 
-epoc.lambdamax <- function(X,Y,getall=F) {
+epoc.lambdamax <- function(X,Y,getall=F,predictorix=NULL) {
   dims <- dim(Y)
+  if (!is.null(predictorix)) {
+    P <- length(predictorix)
+    rix <- array(0,dim=dims[2])
+    rix[predictorix] <- 1:P
+  }
   if (is.null(dims)) {
-    return( norm(t(X) %*% Y,'i') )
+    return( norm(crossprod(X,Y),'i') )
   } else {
     n <- dims[2] #number of variables = genes
     lambdamax <- array(NaN,dim=n)
     for (k in 1:n) {
       predk = X
-      predk[,k] <- 0
-      lambdamax[k] <- norm(t(predk) %*% Y[,k],'i')
+      if(is.null(predictorix))
+	predk[,k] <- 0
+      else if (k %in% predictorix)
+	predk[,rix[k]] <- 0
+      lambdamax[k] <- norm(crossprod(predk, Y[,k]),'i')
     }
     if (getall) return (lambdamax)
     else return(max(lambdamax))
@@ -325,16 +334,19 @@ epoc.final <- function(epocboot, bthr=0.2, k) {
     stop(paste("epoc.final: the requested k exceeds the number of graphs created by epoc.bootstrap. which are",length(epocboot)))
   return(epocboot[[k]] >= bthr)
 }
-epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL,thr=1e-10,trace=0, ...) {
+epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,inorms=NULL,thr=1e-10,trace=0, ...) {
   require('lassoshooting')
   require('Matrix')
   cl <- match.call()
   if (!is.null(cl[['lambda']]))
     stop("The parameter `lambda' should be called `lambdas'.")
+  if (!is.null(cl[['predictorix']]))
+    stop("The parameter `predictorix' is now obsolete, see manual.")
   method <- match.arg(method)
 
   N <- dim(Y)[1] #number of equations = experiments
-  p <- dim(Y)[2] #number of variables = genes
+  #number of variables = genes
+  p <- dim(Y)[2]
   if (trace > 0) cat("Solving for p =",p,"variables,",N,"equations\n")
   mlist <- strsplit(method,'.',fixed=T)
   method = mlist[[1]][1]
@@ -349,11 +361,16 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
   lambdas <- rev(sort(lambdas))
   q <- length(lambdas)
 
-  if (is.null(predictorix)) {
-    predictorix <- 1:p
-    P <- p
+  hasU <- !is.null(U)
+  if (hasU) {
+#  if (is.null(predictorix)) {
+    P <- dim(U)[2]
+    predictorix <- 1:P
+#    P <- p
+#  } else {
+#    P <- length(predictorix)
   } else {
-    P <- length(predictorix)
+    P <- p
   }
   reindex <- array(0,dim=p)
   reindex[predictorix] <- 1:P
@@ -361,7 +378,6 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
   if (trace > 0) cat("Centering...")
   muY <- colMeans(Y)
   Y <- Y - muY
-  hasU <- !is.null(U)
   if (hasU) {
     muU <- colMeans(U)
     U <- U - muU
@@ -374,36 +390,39 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
   #regressing Y on U
   if (trace > 0) cat("Regressing Y on U...")
   if (hasU) {
-    d <- sapply(1:p,function(i) reg(Y[,i], U[,i]))
+    regf <- function(i) { # 20111004: Fixed bug with predictorix here
+	return(reg(Y[,predictorix[i]], U[,i]))
+    }
+    d <- sapply(1:P,regf)
     d <- pmax(d,0)
   } else {
     d <- array(0,dim=p)
   }
   gs <- dimnames(Y)[[2]]
-  names(d) <- gs
+  names(d) <- gs[predictorix]
   if (trace > 0) cat("DONE\n")
   if (trace > 3) cat("Direct effects of CNA:",d,"\n")
 
   if (trace > 0) cat("Correcting for direct effects...")
   YonU <- array(0,dim=c(N,p))
-  for (i in 1:p) YonU[,i] <- d[i]*U[,i]
+  for (i in 1:P) YonU[,predictorix[i]] <- d[i]*U[,i]
 #  YonU <- U%*%diag(d)  # requires much more memory
   Yres <- Y - YonU
   muYres <- colMeans(Yres)
   Yres <- Yres - muYres
   if (trace > 0) cat("DONE\n")
   if(method=='G') {
-    pred <- U[,predictorix]
+    pred <- U
     resp <- Yres
   } else {
-    pred <- Y[,predictorix]
+    pred <- Y
     resp <- Yres
   }
 
   #finding maximum lambda
   if (is.null(inorms)) {
     if (trace > 0) cat("Finding ",c.lambda,"_max...",sep='')
-    inorms <- epoc.lambdamax(pred,resp,getall=T)
+    inorms <- epoc.lambdamax(pred,resp,getall=T, predictorix=predictorix)
   } else {
     if (trace > 0) cat("Using provided ||X'y||",c.infty,sep='')
     if (length(inorms) != p) stop("Parameter inorms should be NULL or a p-vector")
@@ -429,16 +448,30 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
   E <- list()
 
   if (trace > 0) cat("Gram matrix calculation of predictors...")
-  XtX <- t(pred) %*% pred
+  #XtX <- t(pred) %*% pred
+  XtX <- crossprod(pred,pred) #20111004: Should be faster
   if (trace > 0) cat("DONE\n")
   if (trace == 1) cat("Lasso regression...")
 
   lasso <- lassoshooting
   progress <- 0
+  pix <- predictorix # orginal predictorix (kludge for epocA)
+  if (method=='A') {
+    P <- p #!!!
+    predictorix=1:p
+  }
+  links <- function (B) as.integer(sum(B != 0))
   for(k in 1:q) {
-    if (method=='G') B1 <- sparseMatrix(i=1:p, j=1:p, x=d)
-    else B1 <- Matrix(0,nrow=p,ncol=p,sparse=T)
-    dimnames(B1) <- list(gs, gs)
+    if (method=='G') {
+      B1 <- Matrix(0,nrow=P, ncol=p)
+      diag(B1)[1:P] <- d
+      dimnames(B1) <- list(gs[predictorix], gs)
+    }
+    else {
+      B1 <- Matrix(0,nrow=p,ncol=p,sparse=T)
+      dimnames(B1) <- list(gs, gs)
+    }
+
     lambda <- lambdas[k] * lambdamax
     for(i in 1:p) {
       if (trace == 2) progress <- progressbar(i,k,p,q,progress)
@@ -446,20 +479,22 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
 	pred.noi <- pred 
 	if (i %in% predictorix)
 	  pred.noi[,match(i,predictorix)] <- 0 # if we don't update this, lambdamax is wrong, perhaps lassoshooting forcezero should set this column to 0
-	XtY <- t(pred.noi) %*% resp[,i] 
+	#XtY <- t(pred.noi) %*% resp[,i] 
+	XtY <- crossprod(pred.noi, resp[,i]) #20111004: this should be faster than %*%
 	if (trace == 3) cat("for var i =",i,"lasso...\n")
 	l <- lasso(xtx=XtX,xty=XtY,lambda=lambda,forcezero=i,thr=thr)
 	b <- l$coefficients
 	if (trace == 3) cat("for var i =",i," lasso done\n")
 	nonz <- (1:P)[abs(b) >= thr] # 2011-06-13
 	#nonz <- setdiff(nonz,i) # FIXME
-	betas <- Matrix(0,nrow=p,ncol=1,sparse=T) # sparse M don't go well with arrays..
-	dimnames(betas)[[1]] <- gs
+	betas <- Matrix(0,nrow=P,ncol=1,sparse=T) # sparse M don't go well with arrays..
+	dimnames(betas)[[1]] <- gs[predictorix]
 	if (length(nonz)>0){
-	  betas[predictorix[nonz],1] <- b[nonz]
+	  betas[nonz,1] <- b[nonz]
 	  B1[,i] <- B1[,i] + betas
 	}
-	B1[i,i] <- d[i] # without this bug occurs
+	if(i %in% pix)
+	  B1[reindex[i],i] <- d[reindex[i]] # without this bug occurs (diagonal disappear when updating betas)
       }
     }
     if (trace==3) cat("for lambda_k, k =",k,"\n")
@@ -488,7 +523,6 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
     RSS[k] <- sum(e^2)
     R2[k] <- 1 - RSS[k] / SS.tot
     s2[k] <- RSS[k] / (N - P)
-    links <- function (B) as.integer(sum(B != 0))
     p.subset <- links(B1)
     RMSD[k] <- sqrt(RSS[k]/N)
   }
@@ -501,15 +535,15 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,predictorix=NULL,inorms=NULL
     BIC[k] <- N*p*log(RSS[k] / (N*p-p.subset-d.subset)) + (p.subset+d.subset)*log(N*p)
   }
   if (trace > 0) cat("\rDONE",rep(' ',progressbar.width),'\n',sep='')
-  links <- function (B) as.integer(sum( (B * (1 - diag(rep(1,p)))) != 0))
+  links <- function (B) as.integer(sum(B!=0) - sum(diag(B[,pix])!=0))
   links <- unlist(lapply(B, links))
 
-  obj <- list(call=cl, coefficients=B, lambdas=lambdas, lambdamax=lambdamax, d=d, Y.mean=muY,U.mean=muU, Yres.mean=muYres, R2=R2, Cp=Cp, SS.tot=SS.tot, RSS=RSS, RMSD=RMSD, s2=s2, links=links, inorms=inorms, BIC=BIC, E=E)
+  obj <- list(call=cl, coefficients=B, lambdas=lambdas, lambdamax=lambdamax, d=d, Y.mean=muY, U.mean=muU, Yres.mean=muYres, R2=R2, Cp=Cp, SS.tot=SS.tot, RSS=RSS, RMSD=RMSD, s2=s2, links=links, predictorix=pix, inorms=inorms, BIC=BIC, E=E)
   class(obj) <- switch(method, G="EPOCG", A="EPOCA")
   obj
 }
-epocA <- function(Y,U=NULL,lambdas=NULL,predictorix=NULL,thr=1e-10,trace=0, ...) {
-  o <- epoc('A',Y,U,lambdas,predictorix,thr=thr,trace=trace,...)
+epocA <- function(Y,U=NULL,lambdas=NULL,thr=1e-10,trace=0, ...) {
+  o <- epoc('A',Y,U,lambdas,thr=thr,trace=trace,...)
   ### hairy code to remove NULLs from parameter list
   cl <- match.call()
   nnulls <- rep(T,length(names(cl)))
@@ -524,8 +558,8 @@ epocA <- function(Y,U=NULL,lambdas=NULL,predictorix=NULL,thr=1e-10,trace=0, ...)
   o$call <- cl2
   o
 }
-epocG <- function(Y,U,lambdas=NULL,predictorix=NULL,thr=1e-10,trace=0, ...) {
-  o <- epoc('G',Y,U,lambdas,predictorix,thr=thr,trace=trace,...)
+epocG <- function(Y,U,lambdas=NULL,thr=1e-10,trace=0, ...) {
+  o <- epoc('G',Y,U,lambdas,thr=thr,trace=trace,...)
   ### hairy code to remove NULLs from parameter list
   cl <- match.call()
   nnulls <- rep(T,length(names(cl)))
@@ -551,7 +585,7 @@ crossvalix <- function(N,K) {
   folds[[K]] <- left
   folds
 }
-epoc.validation <- function(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,predictorix=NULL,method='G',thr=1e-10,trace=0,...) {
+epoc.validation <- function(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,method='G',thr=1e-10,trace=0,...) {
   N <- dim(Y)[1]
   first <- T
   type = match.arg(type)
@@ -569,7 +603,7 @@ epoc.validation <- function(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,p
 	U.tr <- U[-folds[[k]],]
 	Y.te <- Y[folds[[k]],]
 	U.te <- U[folds[[k]],]
-	G.tr <- epoc(method, Y.tr, U.tr, lambdas=lambdas,predictorix=predictorix,thr=thr,...)
+	G.tr <- epoc(method, Y.tr, U.tr, lambdas=lambdas,thr=thr,...)
 	if (first) {
 	  q = length(G.tr$links)
 	  E <- array(0,dim=c(K,repl,q))
@@ -616,8 +650,8 @@ epoc.validation <- function(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,p
       U.tr <- U[-folds[[1]],]
       Y.te <- Y[folds[[1]],]
       U.te <- U[folds[[1]],]
-      G1 <- epoc(method, Y.tr, U.tr, lambdas=lambdas,predictorix=predictorix,thr=thr,trace=trace,...)
-      G2 <- epoc(method, Y.te, U.te, lambdas=lambdas,predictorix=predictorix,thr=thr,trace=trace,...)
+      G1 <- epoc(method, Y.tr, U.tr, lambdas=lambdas,thr=thr,trace=trace,...)
+      G2 <- epoc(method, Y.te, U.te, lambdas=lambdas,thr=thr,trace=trace,...)
       K <- length(G1$links)
       for (i in 1:length(G1$links)) {
 	if (trace > 0) progress <- progressbar(i,b,K,repl,progress)

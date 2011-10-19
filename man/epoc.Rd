@@ -24,9 +24,9 @@
   EPoC (Endogenous Perturbation analysis of Cancer)
 }
 \usage{
-epocA(Y, U=NULL, lambdas=NULL, predictorix=NULL, thr=1.0e-10, trace=0, ...)
-epocG(Y, U, lambdas=NULL, predictorix=NULL, thr=1.0e-10, trace=0, ...)
-epoc.lambdamax(X, Y, getall=F)
+epocA(Y, U=NULL, lambdas=NULL, thr=1.0e-10, trace=0, ...)
+epocG(Y, U, lambdas=NULL, thr=1.0e-10, trace=0, ...)
+epoc.lambdamax(X, Y, getall=F, predictorix=NULL)
 as.igraph.EPOCA(model,k=1)
 as.igraph.EPOCG(model,k=1)
 as.graph.EPOCA(model,k=1)
@@ -47,11 +47,11 @@ write.sif(model, k=1, file="", append=F)
   \item{Y}{N x p matrix of mRNA transcript levels for p genes and N samples for epocA and epocG. For \code{epoc.lambdamax} \code{Y} is a multi-response matrix}
   \item{U}{N x p matrix of DNA copy number}
   \item{lambdas}{Non-negative vector of relative regularization parameters for lasso. \eqn{\lambda=0} means no regularization which give dense solutions (and takes longer to compute). Default=NULL means let EPoC create a vector}
-  \item{predictorix}{Vector. Use a subset of the variables \code{1:p} as predictors, default is to use all}
   \item{thr}{Threshold for convergence. Default value is 1e-10.  Iterations stop when max absolute parameter change is less than thr}
   \item{trace}{Level of detail for printing out information as iterations proceed.
 Default 0 -- no information}
-  \item{X}{For\code{epoc.lambdamax} \code{X} is the design matrix, i.e. predictors}
+  \item{X}{In \code{epoc.lambdamax} \code{X} is the design matrix, i.e. predictors}
+  \item{predictorix}{For \code{epoc.lambdamax} when using a multi-response matrix \code{Y} predictors are set to zero for each corresponding response. \code{predictorix} tells which of the responses that have a corresponding predictor in the network case}
   \item{getall}{Logical. For \code{epoc.lambdamax} get a vector of all inf-norms instead of a single maximum}
   \item{layout}{Default NULL means layout.circle for 2D and layout.sphere for 3D plot}
   \item{threed}{Default FALSE means 2D plot, 3D plot requires package \code{\link[rgl]{rgl-package}}}
@@ -79,6 +79,8 @@ and EPoC G where
 
 The matrices \eqn{R} and \eqn{E} are so far treated as noise. For details see the reference section and the manual page of \code{\link{lassoshooting}}.
 
+If you have different sizes of U and Y you need to sort your Y such that the U-columns correspond to the first Y-columns. Example: \code{Y.new <- cbind(Y[,haveCNA], Y[, -haveCNA])}
+CHANGES: \code{predictorix} used to be a parameter with a vector of a subset of the variables \code{1:p} of U corresponding to transcripts in Y, Default was to use all which mean that Y and U must have same size.
 
 \code{epoc.lambdamax} returns the maximal \eqn{\lambda} value in a series of lasso regression models such that all coefficients are zero.
 

@@ -3,14 +3,14 @@
 \title{epoc.validation}
 \encoding{utf-8}
 \description{Model validation using random split or cross-validation}
-\usage{epoc.validation(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,predictorix=NULL,method='G',thr=1e-10,trace=0,...)}
+\usage{epoc.validation(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,method='G',thr=1e-10,trace=0,...)}
 \arguments{
   \item{type}{\code{'pred'} for 10-fold CV of prediction error. \code{'concordance'} for random split network concordance using Kendall \eqn{W}.}
   \item{repl}{The number of replicates}
   \item{Y}{mRNA, samples x genes}
   \item{U}{CNA, samples x genes}
   \item{lambdas}{series of relative \eqn{\lambda}s or default=\code{NULL} which means let EPoC choose}
-  \item{predictorix}{a vector of indices that is a subset of the genes to act as predictors, default is all genes}
+%  \item{predictorix}{a vector of indices that is a subset of the genes to act as predictors, default is all genes}
   \item{method}{\code{'G'} means EPoC G and \code{'A'} means EPoC A.}
   \item{thr}{Threshold for convergence to the LASSO solver}
   \item{trace}{Debug information} 

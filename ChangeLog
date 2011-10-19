@@ -1,3 +1,13 @@
+2011-10-11  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* R/epoc.R: Drop support for predictorix
+* man/epoc.Rd: update accordingly
+
+2011-10-04  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* R/epoc.R: Handle predictorix correctly in epoc
+* R/epoc.R: Use crossprod() instead of t(X) %*% X etc
+
 2011-06-14  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * R/epoc.R: plot.EPoC.validation.pred: constrain text within left limit

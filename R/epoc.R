@@ -3,6 +3,7 @@
 # S4 classes not used because of ignorance
 #setClass("EPOCA",contains="list")
 #setClass("EPOCG",contains="list")
+nodiag <- function(x) { diag(x) <- 0; x }
 c.lambda = "\u03BB" #small lambda
 c.square = "\u00B2" #superscript square
 c.infty = "\u221E"  #infinity
@@ -172,7 +173,7 @@ as.igraph.EPOCA <- function(model,k=1) {
 as.graph.EPOCA <- function(model, k=1) {
   require('graph')
   p <- dim(coef(model,k=k))[1]
-  A <- abs(coef(model,k=k)) * (1 - diag(array(1,dim=p)))
+  A <- nodiag(abs(coef(model,k=k))) # * (1 - diag(array(1,dim=p)))
   return( new("graphAM", adjMat=A, edgemode='directed') )
 }
 write.sif <- function(model, k=1, file="", append=F) {
@@ -188,15 +189,13 @@ write.sif <- function(model, k=1, file="", append=F) {
   }
   if (!inherits(file, "connection")) 
     stop("'file' must be a character string or connection")
-#  A <- coef(model,k=k) # FIXME: ta en vanlig matris också
-#  p <- dim(A)[1]
-#  A <- A * (1 - diag(array(1,dim=p)))
+
   if (class(model) == 'matrix') {
     p <- dim(model)[1]
-    A <- model* (1 - diag(array(1,dim=p)))
+    A <- nodiag(model)
   } else {
     p <- dim(model$coefficients[[1]])[1]
-    A <- coef(model, k=k) * (1 - diag(array(1,dim=p)))
+    A <- nodiag(coef(model, k=k))
   }
   newnames <- gsub(' ','_',rownames(A))
   for (i in 1:p)
@@ -219,32 +218,46 @@ plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, showtitle=F,bthr=0,show
     }
     #class(x) <- attr(x,'origclass')
     #print(class(x))
-    p <- dim(x)[1]
     if (showself)
       adjm <- x
     else
-      adjm <- x* (1 - diag(rep(1,p)))
+      adjm <- nodiag(x)
     if (bthr!=0) {
       adjm[abs(adjm) <= bthr] = 0
     }
   } else {
-    p <- dim(x$coefficients[[1]])[1]
     if (showself)
       adjm <- coef(x, k=k) 
     else
-      adjm <- coef(x, k=k) * (1 - diag(array(1,dim=p)))
+      adjm <- nodiag(coef(x, k=k))
   }
-  ii <- apply(adjm!=0,1,sum) + apply(adjm!=0,2,sum)
-  ii <- (1:p)[ii > 0]
-  if (length(ii) > 0) {
-    adjm <- adjm[ii,]
-    adjm <- adjm[,ii]
+  p1 <- dim(adjm)[1]
+  p2 <- dim(adjm)[2]
+  p <- max(p1,p2)
+  adjmBack <- adjm
+  adjm <- as.matrix(adjm)
+  adjm <- t(array(t(adjm),dim=c(p,p)))
+  adjm[p1:p2,] <- 0
+  if (F) { # Disabled: rownames will be wrong
+    # keep only rows and columns with nonzeros
+    ii1 <- apply(adjm!=0,1,sum)
+    ii1 <- (1:p1)[ii1 > 0]
+    ii2 <- apply(adjm!=0,2,sum)
+    ii2 <- (1:p2)[ii2 > 0]
+    if (length(ii1) > 0 | length(ii2) > 0) {
+      adjm <- adjm[ii1,,drop=F]
+      adjm <- adjm[,ii2,drop=F]
+    }
+  } else  {
+    ii <- (1:p)[apply(adjm!=0,1,sum) + apply(adjm!=0,2,sum) > 0]
+    adjm <- adjm[ii,,drop=F]
+    adjm <- adjm[,ii,drop=F]
+    vx <- colnames(adjmBack)[ii]
   }
-  #print(sum(adjm != 0))
+
   # columns are targets in igraph adjacency matrices
   require('igraph')
   g <- graph.adjacency(adjm,mode='directed',weighted=T,diag=F)
-  vx <- rownames(adjm)
   if (is.null(layout)) {
     if (!threed)
       g$layout <- layout.circle
@@ -791,7 +804,6 @@ plot.modelsel <- function(x, ...) {
   text(.5, max(newBIC), paste("s: network size"), pos=1, ...)
   legend(quantile(x$lambdas,.8),quantile(newBIC,.75),c('Cp','BIC'),lty=1:2, ...)
 }
-nodiag <- function(x) (x * (1 - diag(rep(1,dim(x)[1]))))
 plot.bootsize <- function(x, lambda.boot=NULL, B, range=c(0,1), ...) {
   G.boot <- x
   sz = 1/B

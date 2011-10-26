@@ -1,3 +1,7 @@
+2011-10-26  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* R/epoc.R: more fixes for nonsquare coef matrices
+
 2011-10-11  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * R/epoc.R: Drop support for predictorix

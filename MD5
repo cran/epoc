@@ -1,9 +1,9 @@
-add35b5c0b6bfd2e67d427fea207a07d *ChangeLog
-f102767cf3f87f557f1ffd8bcf77bed5 *DESCRIPTION
+2082d0935cbb882753993fe3803830af *ChangeLog
+f52b2a57b974fec18ad3c9d038149d06 *DESCRIPTION
 28fbb7f6009078f062ac429eafcf0378 *INDEX
 816afa88634a83b2fadb6bcb49b6950a *LICENSE
 7a4c0f1d374d659cc42ab0cd1acaaf7c *NAMESPACE
-f0cfac88f4fc12d44a2c4b822a613cda *R/epoc.R
+4cdffc7244291532a87f3b4ecb940ef8 *R/epoc.R
 fca9eaa6e9d30ccc109d3f6f416a3b33 *R/zzz.R
 bbf8006cc98fb5e5db0b42e9abd166cb *data/datalist
 9d912bbf95992cc3eeecda093aab8739 *data/synth.rda

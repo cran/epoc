@@ -31,15 +31,18 @@
   \item{...}{Parameters passed down to underlying functions, \code{plot.default} for \code{plot} and \code{print.default} for \code{print}.}
 }
 \details{
+  Applies survival analysis using the first SVD component, but other components can also be used by changing the input value of \code{C}. Survival scores are generated as described in Subsect. 2.4 in the second paper referenced. A simple non-parametric survival analysis is performed, comparing survival between patientswith positive or negative scores (tumor fitness). 
 }
 \value{
-  A list of class \code{plot.EPoC.validation.pred} or \code{plot.EPoC.validation.W} respectively.
+  The epoc.survival object contains the summary information from a log-rank test comparing survival (\link{survdiff}) and survival fit objects.
 }
 \seealso{
   \code{\link{epoc}}, \code{\link{epoc.validation}} and \code{\link[elasticnet]{spca}}
 }
 \references{
-   Rebecka Jörnsten, Tobias Abenius, Teresia Kling, Linnéa Schmidt, Erik Johansson, Torbjörn Nordling, Bodil Nordlander, Chris Sander, Peter Gennemark, Keiko Funa, Björn Nilsson, Linda Lindahl, Sven Nelander. (2011)  Network modeling of the transcriptional effects of copy number aberrations in glioblastoma.   Molecular Systems Biology 7 (to appear)
+   Rebecka Jörnsten, Tobias Abenius, Teresia Kling, Linnéa Schmidt, Erik Johansson, Torbjörn Nordling, Bodil Nordlander, Chris Sander, Peter Gennemark, Keiko Funa, Björn Nilsson, Linda Lindahl, Sven Nelander. (2011)  Network modeling of the transcriptional effects of copy number aberrations in glioblastoma.   Molecular Systems Biology 7
+
+   Tobias Abenius, Rebecka Jörnsten, Teresia Kling, Linnéa Schmidt, José Sánchez, Sven Nelander. (2012)  System-scale network modeling of cancer using EPoC. Advances in experimental medicine and biology
 }
 \keyword{cancer}
 \keyword{survival}

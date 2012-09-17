@@ -14,8 +14,8 @@ flush(stderr()); flush(stdout())
 ### Title: EPoC
 ### Aliases: epoc epocA epocG summary.EPOCA summary.EPOCG predict.EPOCA
 ###   predict.EPOCG print.EPOCA print.EPOCG coef.EPOCA coef.EPOCG
-###   epoc.lambdamax plot.EPOCA plot.EPOCG write.sif as.graph.EPOCA
-###   as.graph.EPOCG as.igraph.EPOCA as.igraph.EPOCG
+###   epoc.lambdamax write.sif as.graph.EPOCA as.graph.EPOCG
+###   as.igraph.EPOCA as.igraph.EPOCG
 ### Keywords: cancer selection multivariate models graphs
 
 ### ** Examples

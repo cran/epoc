@@ -1,7 +1,7 @@
 import(methods)
 import(Matrix)
 import(survival)
-import(igraph)
+import(igraph0)
 import(lassoshooting)
 S3method(coef, EPOCA)
 S3method(coef, EPOCG)
@@ -21,7 +21,7 @@ S3method(plot, EPoC.validation.W)
 export(epocA)
 export(epocG)
 export(epoc.lambdamax)
-export(plot.modelsel)
+export(modelselPlot)
 
 export(epoc.validation)
 

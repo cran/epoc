@@ -1,3 +1,10 @@
+2012-10-04  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* R/epoc.R: fix diag-problem with logical sparse matrices. 
+* R/epoc.R: Make plot-functions proper methods
+* man/: Make plot-functions proper methods
+* man/epoc.survival.Rd: Some notes on the survival functions
+
 2011-10-26  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * R/epoc.R: more fixes for nonsquare coef matrices

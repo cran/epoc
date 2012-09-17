@@ -8,9 +8,8 @@
 \description{Bootstrap for the EPoC methods}
 \usage{
   epoc.bootstrap(Y, U, nboots=100, bthr=NULL, method='epocG',...)
-  plot.bootsize(x, lambda.boot=NULL, B, range=c(0,1), ...)
+  \method{plot}{bootsize}(x, lambda.boot=NULL, B, range=c(0,1), ...)
   epoc.final(epocboot, bthr=0.2, k)
-  epoc.bootplot(x, layout=NULL, k=1, threed=F,showtitle=F,bthr=0,showself=F,...)
 }
 \arguments{
   \item{Y}{mRNA, samples x genes.}
@@ -24,10 +23,11 @@
   \item{epocboot}{For \code{epoc.final} give a list of bootstraped models from \code{epoc.bootstrap}.}
   \item{k}{For \code{epoc.final} and \code{epoc.bootplot} select the \code{k} sparsest model.}
   \item{bthr}{Require presence of links in 100*bthr\% of the bootstrap iterations.}
-  \item{showself}{Show self-regulating loops in plot, N.B. doesn't work as it should!}
-  \item{threed}{Plot the network in 3D}
-  \item{showtitle}{Show the call made to \code{epocA}/\code{epocG} if available in the plot title}
-  \item{layout}{layout, default=NULL means use \code{layout.circle} for 2D and \code{layout.sphere} for 3D plots.}
+%  \item{showself}{Show self-regulating loops in plot, N.B. doesn't work as it should!}
+%  \item{threed}{Plot the network in 3D}
+%  \item{showtitle}{Show the call made to \code{epocA}/\code{epocG} if available in the plot title}
+%  \item{layout}{layout, default=NULL means use \code{layout.circle} for 2D and \code{layout.sphere} for 3D plots.}
+%  \item{type}{This page together with \link{plot.EPOCG} documents \code{type='graph'}}
   \item{...}{Parameters passed down to an underlying function. For \code{epoc.bootstrap} these are passed down to \code{"epocG"} or \code{"epocA"} respectively. For \code{epoc.bootplot} and \code{plot.bootsize} parameters are passed down to the underlying plot command.}
 }
 \details{

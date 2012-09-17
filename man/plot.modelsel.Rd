@@ -1,11 +1,24 @@
-\name{plot.modelsel}
-\alias{plot.modelsel}
+\name{modelselPlot}
+\alias{modelselPlot}
+\alias{plot.EPOCA}
+\alias{plot.EPOCG}
 \title{Plot BIC, Mallow's Cp and \eqn{\lambda}}
 \encoding{utf-8}
 \description{Plot BIC, Mallow's Cp and \eqn{\lambda} }
-\usage{plot.modelsel(x, ...)}
+\usage{
+modelselPlot(x, layout=NULL, k=1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'), ...)
+\method{plot}{EPOCA}(x, layout=NULL, k=1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'), ...)
+\method{plot}{EPOCG}(x, layout=NULL, k=1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'), ...)
+}
 \arguments{
   \item{x}{An EPoC G or EPoC A object}
+  \item{layout}{Not used only for \code{type='modelsel'}}
+  \item{k}{Not used for \code{type='modelsel'}}
+  \item{threed}{Not used for \code{type='modelsel'}}
+  \item{showtitle}{Not used for \code{type='modelsel'}}
+  \item{bthr}{Not used for \code{type='modelsel'}}
+  \item{showself}{Not used for \code{type='modelsel'}}
+  \item{type}{This page documents \code{type='modelsel'} only, for \code{type='graph'} see \link{plot.EPOCG} and \link{epoc.bootplot}}
   \item{...}{Parameters passed down to underlying functions, \code{plot}, \code{lines}, \code{points}, \code{abline}, \code{axis}, \code{text} and \code{legend}.}
 }
 \details{

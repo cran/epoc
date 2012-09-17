@@ -3,7 +3,14 @@
 # S4 classes not used because of ignorance
 #setClass("EPOCA",contains="list")
 #setClass("EPOCG",contains="list")
-nodiag <- function(x) { diag(x) <- 0; x }
+nodiag <- function(x) { 
+  if (is(x[1,1], 'logical')) {
+    diag(x) <- FALSE
+  } else {
+    diag(x) <- 0
+  }
+  x
+}
 c.lambda = "\u03BB" #small lambda
 c.square = "\u00B2" #superscript square
 c.infty = "\u221E"  #infinity
@@ -166,7 +173,7 @@ as.igraph.EPOCA <- function(model,k=1) {
   p <- dim(model$coefficients)[1]
   adjm <- coef(model, k=k) 
   # columns are targets in igraph adjacency matrices
-  require('igraph')
+  require('igraph0')
   g <- graph.adjacency(adjm,mode='directed',weighted=T,diag=F)
   return(g)
 }
@@ -209,7 +216,13 @@ write.sif <- function(model, k=1, file="", append=F) {
 	}
     }
 }
-plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, showtitle=F,bthr=0,showself=F,...) {
+plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'),...) {
+  typeOfPlot <- match.arg(type)
+  if (typeOfPlot == 'modelsel') {
+    cl <- match.call()
+    modelselPlot(x, ...)
+  }
+
   if (!is.null(attr(x,'epocboot')) | !is.null(attr(x,'epocboot1')) | class(x) == 'matrix' | inherits(x,'Matrix')) {
     if (!is.null(attr(x,'epocboot'))) {
       if (k > length(x)) stop(paste("This EPoC bootstrap object contains only",length(x),"sparsity levels"))
@@ -256,7 +269,7 @@ plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, showtitle=F,bthr=0,show
   }
 
   # columns are targets in igraph adjacency matrices
-  require('igraph')
+  require('igraph0')
   g <- graph.adjacency(adjm,mode='directed',weighted=T,diag=F)
   if (is.null(layout)) {
     if (!threed)
@@ -326,6 +339,7 @@ epoc.bootstrap <- function(Y,U,nboots=100,bthr=NULL,method='epocG',...) {
     if (first) {
       D <- D2
       q <- length(mod.boot1$lambdas)
+      lambdas <- mod.boot1$lambdas
       first = F
     } else {
       D <- plapply(D, D2, function(A,B) A+B)
@@ -340,6 +354,9 @@ epoc.bootstrap <- function(Y,U,nboots=100,bthr=NULL,method='epocG',...) {
 #    class(D[[i]]) <- 'EPOCBOOT1'
   }
 #  attr(D,'epocboot') <- T
+  attr(D, 'nboots') <- nboots
+  attr(D, 'lambdas') <- lambdas
+  class(D) <- 'bootsize'
   D
 }
 epoc.final <- function(epocboot, bthr=0.2, k) {
@@ -782,7 +799,7 @@ plot.EPoC.validation.pred <- function(x, ...) {
   text(xtext,quantile(o$mm$fit,.6),paste('s*=',round(o$sopt,0)),pos=4)
   text(0.5, max(o$pp$fit+0.5*o$pp$se), paste("s: network size"),pos=1)
 }
-plot.modelsel <- function(x, ...) {
+modelselPlot <- function (x, layout=NULL, k = 1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'),...) {
   eps <- 0.1
   newCp <- (x$Cp- min(x$Cp))/(eps + max(x$Cp) - min(x$Cp))
   #newCp <- newCp - min(newCp)
@@ -804,7 +821,8 @@ plot.modelsel <- function(x, ...) {
   text(.5, max(newBIC), paste("s: network size"), pos=1, ...)
   legend(quantile(x$lambdas,.8),quantile(newBIC,.75),c('Cp','BIC'),lty=1:2, ...)
 }
-plot.bootsize <- function(x, lambda.boot=NULL, B, range=c(0,1), ...) {
+plot.bootsize <- function(x, lambda.boot=NULL, B=NULL, range=c(0,1), ...) {
+  if (is.null(B)) { B <- attr(x,'nboots') }
   G.boot <- x
   sz = 1/B
   bvec<-seq(range[1],range[2], by=sz)
@@ -819,13 +837,19 @@ plot.bootsize <- function(x, lambda.boot=NULL, B, range=c(0,1), ...) {
   for(k in 1:K) {
     lines(bvec,hG[[k]],lty=k)
   }
+  if (is.null(lambda.boot)) {
+    lambda.boot <- attr(x,'lambdas')
+  }
   if (!is.null(lambda.boot)) {
-    legend(mean(range), 0.9*ymax,paste('lambda:',round(lambda.boot,3)),lty=1:K, ...)
+#    legend(mean(range), 0.9*ymax,paste('lambda:',round(lambda.boot,3)),lty=1:K, ...)
+    legendtexts <- paste('lambda:',round(lambda.boot,3))
   } else {
     # FIXME: get default lambdas from epoc functions, make epoc.bootstrap give them back
     message("Currently you have to provide the lambda values in the lambda.boot parameter to get them in the legend of the plot. Giving indices instead.")
-    legend(mean(range), 0.9*ymax,paste('lambda idx:',1:K),lty=1:K, ...)
+    legendtexts <- paste('lambda idx:',1:K)
+#    legend(mean(range), 0.9*ymax,paste('lambda idx:',1:K),lty=1:K, ...)
   }
+  legend(mean(range), 0.9*ymax,legendtexts,lty=1:K, ...)
 }
 epoc.svd <- function(model, k=1, C=1,numload=NULL) {
   require(survival)

@@ -1,4 +1,4 @@
 .onLoad <- function(lib, pkg) {
-  require(methods)
-  require(Matrix)
+#  require(methods)
+#  require(Matrix)
 }

@@ -11,8 +11,6 @@
 \alias{coef.EPOCA}
 \alias{coef.EPOCG}
 \alias{epoc.lambdamax}
-\alias{plot.EPOCA}
-\alias{plot.EPOCG}
 \alias{write.sif}
 \alias{as.graph.EPOCA}
 \alias{as.graph.EPOCG}
@@ -40,8 +38,6 @@ write.sif(model, k=1, file="", append=F)
 \method{coef}{EPOCG}(object, k=1, ...)
 \method{predict}{EPOCA}(object, newdata,k=1,trace=0, ...)
 \method{predict}{EPOCG}(object, newdata,k=1,trace=0, ...)
-\method{plot}{EPOCA}(x, layout=NULL,k=1,threed=F, showtitle=F, bthr=0, showself=F, ...)
-\method{plot}{EPOCG}(x, layout=NULL,k=1,threed=F, showtitle=F, bthr=0, showself=F, ...)
 }
 \arguments{
   \item{Y}{N x p matrix of mRNA transcript levels for p genes and N samples for epocA and epocG. For \code{epoc.lambdamax} \code{Y} is a multi-response matrix}
@@ -53,11 +49,11 @@ Default 0 -- no information}
   \item{X}{In \code{epoc.lambdamax} \code{X} is the design matrix, i.e. predictors}
   \item{predictorix}{For \code{epoc.lambdamax} when using a multi-response matrix \code{Y} predictors are set to zero for each corresponding response. \code{predictorix} tells which of the responses that have a corresponding predictor in the network case}
   \item{getall}{Logical. For \code{epoc.lambdamax} get a vector of all inf-norms instead of a single maximum}
-  \item{layout}{Default NULL means layout.circle for 2D and layout.sphere for 3D plot}
-  \item{threed}{Default FALSE means 2D plot, 3D plot requires package \code{\link[rgl]{rgl-package}}}
-  \item{showtitle}{Show the call made to \code{epocA}/\code{epocG} if available in the plot title}
-  \item{showself}{Show self-regulating loops in plot, N.B. doesn't work as it should!}
-  \item{bthr}{Require presence of links in 100*bthr\% of the bootstrap iterations. If this is not a bootstrapped model it will still require values to be larger than this threshold.}
+%  \item{layout}{Default NULL means layout.circle for 2D and layout.sphere for 3D plot}
+%  \item{threed}{Default FALSE means 2D plot, 3D plot requires package \code{\link[rgl]{rgl-package}}}
+%  \item{showtitle}{Show the call made to \code{epocA}/\code{epocG} if available in the plot title}
+%  \item{showself}{Show self-regulating loops in plot, N.B. doesn't work as it should!}
+%  \item{bthr}{Require presence of links in 100*bthr\% of the bootstrap iterations. If this is not a bootstrapped model it will still require values to be larger than this threshold.}
   \item{file}{either a character string naming a file or a connection open for writing. \code{""} indicates output to the console}
   \item{append}{logical. Only relevant if \code{file} is a character string.  If \code{TRUE}, the output is appended to the file.  If \code{FALSE}, any existing file of the name is destroyed}
   \item{model}{Model set from epocA or epocG}
@@ -65,7 +61,8 @@ Default 0 -- no information}
   \item{newdata}{List of Y and U matrices required for prediction. \code{epocG} requires just U.}
   \item{x}{Model parameter to \code{print} and \code{plot}}
   \item{object}{Model parameter to \code{summary}, \code{coef} and \code{predict}}
-  \item{...}{Parameters passed down to underlying function, e.g. \code{\link{print.default}}, \code{\link[igraph]{plot.igraph}} or \code{\link[igraph]{rglplot}} For \code{epocA} and \code{epocG} \code{\dots} are reserved for experimental options.}
+%  \item{type}{\code{'graph'} or \code{'fit'}, see \code{\link{modelselPlot}} for fit}
+  \item{...}{Parameters passed down to underlying function, e.g. \code{\link{print.default}}, \code{\link[igraph0]{plot.igraph}} or \code{\link[igraph0]{rglplot}} For \code{epocA} and \code{epocG} \code{\dots} are reserved for experimental options.}
 }
 
 \details{
@@ -84,8 +81,8 @@ CHANGES: \code{predictorix} used to be a parameter with a vector of a subset of 
 
 \code{epoc.lambdamax} returns the maximal \eqn{\lambda} value in a series of lasso regression models such that all coefficients are zero.
 
-\code{plot} plot graph of model using the \code{igraph} package
-arrows only tell direction, not inhibit or stimulate
+\code{plot} if \code{type='graph'} (default) plot graph of model using the \code{igraph0} package
+arrows only tell direction, not inhibit or stimulate. If \code{type='modelsel'} see \code{modelselPlot}.
 }
 \note{
 The \code{coef} function returns transposed versions of the matrices \eqn{A} and \eqn{G}.
@@ -112,12 +109,12 @@ An object of these classes is a list containing at least the following component
 \item{d}{Direct effects of CNA to corresponding gene}
 }
 \seealso{
-  \code{\link{print}}, \code{\link{plot.modelsel}},
+  \code{\link{print}}, \code{\link{modelselPlot}},
   \code{\link{epoc.validation}},
   \code{\link{epoc.bootstrap}},
   \code{\link{plot.EPoC.validation.pred}},
   \code{\link{plot.EPoC.validation.W}},
-  \code{\link[igraph]{rglplot}}, \code{\link[igraph]{plot.igraph}}, \code{\link{coef}}, \code{\link{predict}}, \code{\link[rgl]{rgl-package}}
+  \code{\link[igraph0]{rglplot}}, \code{\link[igraph0]{plot.igraph}}, \code{\link{coef}}, \code{\link{predict}}, \code{\link[rgl]{rgl-package}}
 }
 \author{
   Tobias Abenius

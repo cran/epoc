@@ -3,7 +3,8 @@
 \title{epoc.validation}
 \encoding{utf-8}
 \description{Model validation using random split or cross-validation}
-\usage{epoc.validation(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,method='G',thr=1e-10,trace=0,...)}
+\usage{epoc.validation(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,
+   method='G',thr=1e-10,trace=0,...)}
 \arguments{
   \item{type}{\code{'pred'} for 10-fold CV of prediction error. \code{'concordance'} for random split network concordance using Kendall \eqn{W}.}
   \item{repl}{The number of replicates}

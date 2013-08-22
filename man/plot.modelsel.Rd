@@ -6,15 +6,17 @@
 \encoding{utf-8}
 \description{Plot BIC, Mallow's Cp and \eqn{\lambda} }
 \usage{
-modelselPlot(x, layout=NULL, k=1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'), ...)
-\method{plot}{EPOCA}(x, layout=NULL, k=1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'), ...)
-\method{plot}{EPOCG}(x, layout=NULL, k=1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'), ...)
+modelselPlot(x, layout=NULL, k=1, showtitle=F, bthr=0, 
+             showself=F, type=c('graph','modelsel'), ...)
+\method{plot}{EPOCA}(x, layout=NULL, k=1, showtitle=F, bthr=0, 
+             showself=F, type=c('graph','modelsel'), ...)
+\method{plot}{EPOCG}(x, layout=NULL, k=1, showtitle=F, bthr=0, 
+             showself=F, type=c('graph','modelsel'), ...)
 }
 \arguments{
   \item{x}{An EPoC G or EPoC A object}
   \item{layout}{Not used only for \code{type='modelsel'}}
   \item{k}{Not used for \code{type='modelsel'}}
-  \item{threed}{Not used for \code{type='modelsel'}}
   \item{showtitle}{Not used for \code{type='modelsel'}}
   \item{bthr}{Not used for \code{type='modelsel'}}
   \item{showself}{Not used for \code{type='modelsel'}}

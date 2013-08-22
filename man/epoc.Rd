@@ -14,8 +14,6 @@
 \alias{write.sif}
 \alias{as.graph.EPOCA}
 \alias{as.graph.EPOCG}
-\alias{as.igraph.EPOCA}
-\alias{as.igraph.EPOCG}
 \title{EPoC}
 \encoding{utf-8}
 \description{
@@ -25,8 +23,6 @@
 epocA(Y, U=NULL, lambdas=NULL, thr=1.0e-10, trace=0, ...)
 epocG(Y, U, lambdas=NULL, thr=1.0e-10, trace=0, ...)
 epoc.lambdamax(X, Y, getall=F, predictorix=NULL)
-as.igraph.EPOCA(model,k=1)
-as.igraph.EPOCG(model,k=1)
 as.graph.EPOCA(model,k=1)
 as.graph.EPOCG(model,k=1)
 write.sif(model, k=1, file="", append=F)
@@ -57,12 +53,12 @@ Default 0 -- no information}
   \item{file}{either a character string naming a file or a connection open for writing. \code{""} indicates output to the console}
   \item{append}{logical. Only relevant if \code{file} is a character string.  If \code{TRUE}, the output is appended to the file.  If \code{FALSE}, any existing file of the name is destroyed}
   \item{model}{Model set from epocA or epocG}
-  \item{k}{Select a model of sparsity level k in [1,K]. In summary default (NULL) means all.}
+  \item{k}{Select a model of sparsity level k in [1,K]. In \code{summary} default (NULL) means all. In \code{plot} default is first model.}
   \item{newdata}{List of Y and U matrices required for prediction. \code{epocG} requires just U.}
   \item{x}{Model parameter to \code{print} and \code{plot}}
   \item{object}{Model parameter to \code{summary}, \code{coef} and \code{predict}}
 %  \item{type}{\code{'graph'} or \code{'fit'}, see \code{\link{modelselPlot}} for fit}
-  \item{...}{Parameters passed down to underlying function, e.g. \code{\link{print.default}}, \code{\link[igraph0]{plot.igraph}} or \code{\link[igraph0]{rglplot}} For \code{epocA} and \code{epocG} \code{\dots} are reserved for experimental options.}
+  \item{...}{Parameters passed down to underlying function, e.g. \code{\link{print.default}}.  For \code{epocA} and \code{epocG} \code{\dots} are reserved for experimental options.}
 }
 
 \details{
@@ -81,7 +77,7 @@ CHANGES: \code{predictorix} used to be a parameter with a vector of a subset of 
 
 \code{epoc.lambdamax} returns the maximal \eqn{\lambda} value in a series of lasso regression models such that all coefficients are zero.
 
-\code{plot} if \code{type='graph'} (default) plot graph of model using the \code{igraph0} package
+\code{plot} if \code{type='graph'} (default) plot graph of model using the \code{Rgraphviz} package
 arrows only tell direction, not inhibit or stimulate. If \code{type='modelsel'} see \code{modelselPlot}.
 }
 \note{
@@ -114,7 +110,7 @@ An object of these classes is a list containing at least the following component
   \code{\link{epoc.bootstrap}},
   \code{\link{plot.EPoC.validation.pred}},
   \code{\link{plot.EPoC.validation.W}},
-  \code{\link[igraph0]{rglplot}}, \code{\link[igraph0]{plot.igraph}}, \code{\link{coef}}, \code{\link{predict}}, \code{\link[rgl]{rgl-package}}
+  \code{\link{coef}}, \code{\link{predict}}
 }
 \author{
   Tobias Abenius

@@ -130,7 +130,7 @@ print.summary.EPOCA <- function(x, ...) {
   cat("\n")
 }
 print.EPOCA <- function(x, ...) {
-  require(methods)
+  #require(methods)
   digits = max(3, getOption("digits") - 3)
   cat("\nCall:\n",deparse(x$call), "\n\n", sep="")
   cat("Coefficients:\n")
@@ -150,7 +150,7 @@ print.EPOCA <- function(x, ...) {
   invisible(x)
 }
 print.EPOCG <- function(x, ...) {
-  require(methods)
+  #require(methods)
   digits = max(3, getOption("digits") - 3)
   cat("\nCall:\n",deparse(x$call), "\n", sep="")
   cat("\nCoefficients:\n")
@@ -169,16 +169,8 @@ print.EPOCG <- function(x, ...) {
   cat("\n")
   invisible(x)
 }
-as.igraph.EPOCA <- function(model,k=1) {
-  p <- dim(model$coefficients)[1]
-  adjm <- coef(model, k=k) 
-  # columns are targets in igraph adjacency matrices
-  require('igraph0')
-  g <- graph.adjacency(adjm,mode='directed',weighted=T,diag=F)
-  return(g)
-}
 as.graph.EPOCA <- function(model, k=1) {
-  require('graph')
+  #require('graph')
   p <- dim(coef(model,k=k))[1]
   A <- nodiag(abs(coef(model,k=k))) # * (1 - diag(array(1,dim=p)))
   return( new("graphAM", adjMat=A, edgemode='directed') )
@@ -216,7 +208,7 @@ write.sif <- function(model, k=1, file="", append=F) {
 	}
     }
 }
-plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'),...) {
+plot.EPOCA <- function (x, layout=NULL, k = 1, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'),...) {
   typeOfPlot <- match.arg(type)
   if (typeOfPlot == 'modelsel') {
     cl <- match.call()
@@ -267,24 +259,38 @@ plot.EPOCA <- function (x, layout=NULL, k = 1, threed=F, showtitle=F, bthr=0, sh
     adjm <- adjm[,ii,drop=F]
     vx <- colnames(adjmBack)[ii]
   }
+  # columns are targets in graph adjacency matrices
 
-  # columns are targets in igraph adjacency matrices
-  require('igraph0')
-  g <- graph.adjacency(adjm,mode='directed',weighted=T,diag=F)
-  if (is.null(layout)) {
-    if (!threed)
-      g$layout <- layout.circle
-    else
-      g$layout <- layout.sphere
-  } else {
-    g$layout <- layout
+  pp <- length(ii)
+  g <- new("graphNEL", nodes=vx,edgemode="directed")
+  edgecolor <- NULL
+  attrib1 <- NULL
+  for (i in 1:pp) {
+    for (j in 1:pp) {
+      if (adjm[i,j] > 0) {
+	g <- addEdge(vx[i], vx[j], g, 1)
+	edgecolor <- c(edgecolor,color='green')
+	attrib1 <- c(attrib1,foo='normal')
+      } else if (adjm[i,j] < 0) {
+	g <- addEdge(vx[i], vx[j], g, 1)
+	edgecolor <- c(edgecolor,color='red')
+	attrib1 <- c(attrib1,foo='tee')
+      }
+    }
   }
-  if(threed) {
-    rglplot(g,vertex.label=vx,vertex.size=2, ...)
-  } else {
-    plot(g,vertex.label=vx,vertex.label.cex=0.6,vertex.size=20,vertex.color=0,vertex.shape="rectangle",edge.width=1,edge.color='black', ...)
-    if (showtitle) title(x$call)
-  }
+  names(attrib1) <- edgeNames(g)
+  names(edgecolor) <- edgeNames(g)
+  edgeAttrs <- list(arrowhead=attrib1,color=edgecolor)
+
+  N <- nodes(g); 
+  shapes <- rep('box',length(N)); 
+  names(shapes) <- N
+  ww <- rep(1.5,length(N))
+  names(ww) <-  N
+  nodeAttrs <- list(width=ww,shape=shapes)
+
+  plot(g,'fdp',edgeAttrs=edgeAttrs,nodeAttrs=nodeAttrs)
+  if (showtitle) title(x$call)
 }
 epoc.bootplot <- plot.EPOCA
 epoc.svdplot <- function(G.svd,C=1) {
@@ -298,8 +304,6 @@ plot.EPOCG <- plot.EPOCA
 coef.EPOCG <- coef.EPOCA
 print.summary.EPOCG <- print.summary.EPOCA
 summary.EPOCG <- summary.EPOCA
-as.graph.EPOCG <- as.graph.EPOCA
-as.igraph.EPOCG <- as.igraph.EPOCA
 as.graph.EPOCG <- as.graph.EPOCA
 
 epoc.lambdamax <- function(X,Y,getall=F,predictorix=NULL) {
@@ -365,8 +369,8 @@ epoc.final <- function(epocboot, bthr=0.2, k) {
   return(epocboot[[k]] >= bthr)
 }
 epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,inorms=NULL,thr=1e-10,trace=0, ...) {
-  require('lassoshooting')
-  require('Matrix')
+  #require('lassoshooting')
+  #require('Matrix')
   cl <- match.call()
   if (!is.null(cl[['lambda']]))
     stop("The parameter `lambda' should be called `lambdas'.")
@@ -428,7 +432,11 @@ epoc <- function(method=c('G','A'),Y,U,lambdas=NULL,inorms=NULL,thr=1e-10,trace=
   } else {
     d <- array(0,dim=p)
   }
-  gs <- dimnames(Y)[[2]]
+  if (is.null(dimnames(Y)) || is.null(dimnames(Y)[[2]])) {
+    gs <- paste('V',1:p,sep='')
+  } else {
+    gs <- dimnames(Y)[[2]]
+  }
   names(d) <- gs[predictorix]
   if (trace > 0) cat("DONE\n")
   if (trace > 3) cat("Direct effects of CNA:",d,"\n")
@@ -671,7 +679,7 @@ epoc.validation <- function(type=c('pred','concordance'),repl,Y,U,lambdas=NULL,m
     class(o) <- "EPoC.validation.pred"
     return(o)
   } else if (type == 'concordance') {
-    require(irr)
+    #require(irr)
     if (trace > 0) cat ("epoc.validation: type =",type)
     first = T
     for(b in 1:repl) {
@@ -799,7 +807,7 @@ plot.EPoC.validation.pred <- function(x, ...) {
   text(xtext,quantile(o$mm$fit,.6),paste('s*=',round(o$sopt,0)),pos=4)
   text(0.5, max(o$pp$fit+0.5*o$pp$se), paste("s: network size"),pos=1)
 }
-modelselPlot <- function (x, layout=NULL, k = 1, threed=F, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'),...) {
+modelselPlot <- function (x, layout=NULL, k = 1, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'),...) {
   eps <- 0.1
   newCp <- (x$Cp- min(x$Cp))/(eps + max(x$Cp) - min(x$Cp))
   #newCp <- newCp - min(newCp)
@@ -852,10 +860,10 @@ plot.bootsize <- function(x, lambda.boot=NULL, B=NULL, range=c(0,1), ...) {
   legend(mean(range), 0.9*ymax,legendtexts,lty=1:K, ...)
 }
 epoc.svd <- function(model, k=1, C=1,numload=NULL) {
-  require(survival)
-  require(elasticnet)
-  require(Matrix)
-  require(methods)
+  #require(survival)
+  #require(elasticnet)
+  #require(Matrix)
+  #require(methods)
   # NB: this method is working with a transposed matrix
   if (is.null(numload)) {
     numload = rep(10,C)
@@ -898,8 +906,8 @@ epoc.svd <- function(model, k=1, C=1,numload=NULL) {
   return (list(m=m,spload.in=ss.in,spload.out=ss.out,load.in=sg$v[,1:C],load.out=sg$u[,1:C],ii=ii, type=type))
 }
 epoc.survival <- function(G.svd, Y, U, surv, C=1, type=NULL) {
-  require(survival)
-  require(elasticnet)
+  #require(survival)
+  #require(elasticnet)
   if (G.svd$type=="EPOCA") {
     input <- Y
     output <- U

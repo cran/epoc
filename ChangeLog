@@ -1,3 +1,8 @@
+2013-08-22  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* R/epoc.R: change graph plotting to use Rgraphviz instead of igraph
+* man/: removed igraph mentioned in manual
+
 2012-10-04  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * R/epoc.R: fix diag-problem with logical sparse matrices. 

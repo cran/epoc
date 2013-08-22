@@ -1,8 +1,12 @@
 import(methods)
 import(Matrix)
-import(survival)
-import(igraph0)
 import(lassoshooting)
+importFrom("survival",survdiff,survfit,Surv)
+importFrom("irr",kendall)
+importFrom("elasticnet",spca)
+import(graph)
+importFrom("Rgraphviz",plot)
+
 S3method(coef, EPOCA)
 S3method(coef, EPOCG)
 S3method(predict, EPOCA)
@@ -41,8 +45,6 @@ export(write.sif)
 
 export(as.graph.EPOCA)
 export(as.graph.EPOCG)
-export(as.igraph.EPOCA)
-export(as.igraph.EPOCG)
 
 export(plapply)
 

@@ -1,3 +1,13 @@
+2018-11-29  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* DESCRIPTION: added article reference, bumped version,
+removed RCytoscape
+* NAMESPACE: add S3method for bootsize
+
+2018-11-28  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
+
+* NAMESPACE: add S3method for bootsize
+
 2013-08-22  Tobias Abenius  <Tobias.Abenius@Chalmers.se>
 
 * R/epoc.R: change graph plotting to use Rgraphviz instead of igraph

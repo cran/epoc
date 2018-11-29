@@ -169,11 +169,17 @@ print.EPOCG <- function(x, ...) {
   cat("\n")
   invisible(x)
 }
+# graph package broken
+# 
+#as.graph.EPOCA <- function(model, k=1) {
+#  #require('graph')
+#  p <- dim(coef(model,k=k))[1]
+#  A <- nodiag(abs(coef(model,k=k))) # * (1 - diag(array(1,dim=p)))
+#  return( new("graphAM", adjMat=A, edgemode='directed') )
+#}
 as.graph.EPOCA <- function(model, k=1) {
-  #require('graph')
-  p <- dim(coef(model,k=k))[1]
-  A <- nodiag(abs(coef(model,k=k))) # * (1 - diag(array(1,dim=p)))
-  return( new("graphAM", adjMat=A, edgemode='directed') )
+  stop("epoc: graph package is broken for me")
+  return(NULL);
 }
 write.sif <- function(model, k=1, file="", append=F) {
   if (file == "") 
@@ -209,6 +215,7 @@ write.sif <- function(model, k=1, file="", append=F) {
     }
 }
 plot.EPOCA <- function (x, layout=NULL, k = 1, showtitle=F, bthr=0, showself=F, type=c('graph','modelsel'),...) {
+  if(!requireNamespace('graph')) stop('This EPoC method requires the "graph" package from the bioconductor repository')
   typeOfPlot <- match.arg(type)
   if (typeOfPlot == 'modelsel') {
     cl <- match.call()
@@ -268,21 +275,21 @@ plot.EPOCA <- function (x, layout=NULL, k = 1, showtitle=F, bthr=0, showself=F, 
   for (i in 1:pp) {
     for (j in 1:pp) {
       if (adjm[i,j] > 0) {
-	g <- addEdge(vx[i], vx[j], g, 1)
-	edgecolor <- c(edgecolor,color='green')
-	attrib1 <- c(attrib1,foo='normal')
+        g <- graph::addEdge(vx[i], vx[j], g, 1)
+        edgecolor <- c(edgecolor,color='green')
+        attrib1 <- c(attrib1,foo='normal')
       } else if (adjm[i,j] < 0) {
-	g <- addEdge(vx[i], vx[j], g, 1)
-	edgecolor <- c(edgecolor,color='red')
-	attrib1 <- c(attrib1,foo='tee')
+        g <- graph::addEdge(vx[i], vx[j], g, 1)
+        edgecolor <- c(edgecolor,color='red')
+        attrib1 <- c(attrib1,foo='tee')
       }
     }
   }
-  names(attrib1) <- edgeNames(g)
-  names(edgecolor) <- edgeNames(g)
+  names(attrib1) <- graph::edgeNames(g)
+  names(edgecolor) <- graph::edgeNames(g)
   edgeAttrs <- list(arrowhead=attrib1,color=edgecolor)
 
-  N <- nodes(g); 
+  N <- graph::nodes(g); 
   shapes <- rep('box',length(N)); 
   names(shapes) <- N
   ww <- rep(1.5,length(N))

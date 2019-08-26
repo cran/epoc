@@ -1,5 +1,5 @@
 Package: epoc
-Version: 0.2.6-1
+Version: 0.2.6-1.1
 Date: 2018-11-29
 Encoding: UTF-8
 Title: Endogenous Perturbation Analysis of Cancer
@@ -21,6 +21,6 @@ Description: Estimates sparse matrices A or G using fast lasso regression from m
   (2011) <doi:10.1038/msb.2011.17>.
 License: LGPL-3
 NeedsCompilation: no
-Packaged: 2018-11-29 09:16:53 UTC; tabenius
+Packaged: 2019-08-26 07:51:49 UTC; hornik
 Repository: CRAN
-Date/Publication: 2018-11-29 12:10:03 UTC
+Date/Publication: 2019-08-26 07:55:29 UTC

@@ -10,7 +10,7 @@
   CNA is centered to mean=0.
   survival is in days.
 }
-\usage{synth}
+\usage{data(synth)}
 \format{
   The \code{synth} data set is a list containing mRNA \code{y}, CNA \code{u} and \code{surv} survival data.
 }
